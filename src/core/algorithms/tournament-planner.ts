@@ -107,7 +107,7 @@ export function planTournament(input: {
         ? `Con ${active.length} jugadores se forman ${math.tablesPerRound} mesas exactas sin descansos en todas las fases.`
         : `En Ronda 1 descansan ${math.byesPerRound} ${
             math.byesPerRound === 1 ? 'jugador elegido' : 'jugadores elegidos'
-          } al azar con pase libre a Ronda 2; en Ronda 2 juegan obligatoriamente para diferenciar puntajes antes del corte a ${
+          } al azar con pase libre a Ronda 2; en Ronda 2 juegan obligatoriamente y los descansos de Ronda 2 se asignan prioritariamente a ganadores de Ronda 1 para no dejar sin segunda partida a quienes perdieron en Ronda 1 antes del corte a ${
             stages[2]!.expectedParticipants
           } jugadores. A partir de esa fase todas las mesas son exactas sin descansos.`,
       'La Gran Final se decide en 1 sola partida de 4 finalistas: se proclama la Pareja Ganadora de la Final y el Campeón Individual entre sus dos integrantes según rendimiento acumulado.'
