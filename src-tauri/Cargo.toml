@@ -1,0 +1,23 @@
+[package]
+name = "domino-tournament-manager"
+version = "0.2.0"
+description = "Offline-first desktop manager for short social domino tournaments"
+authors = ["Enrique Villasana"]
+edition = "2021"
+
+[lib]
+name = "domino_tournament_manager_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled", "backup"] }
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3"

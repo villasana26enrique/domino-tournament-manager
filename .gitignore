@@ -1,0 +1,10 @@
+node_modules/
+dist/
+reports/
+coverage/
+*.db
+*.db-wal
+*.db-shm
+*.bak
+.DS_Store
+src-tauri/target/

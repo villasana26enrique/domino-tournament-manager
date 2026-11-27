@@ -1,0 +1,49 @@
+{
+  "name": "domino-tournament-manager",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline-first Windows desktop application and competition engine for short social domino tournaments.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "simulate": "tsx src/cli/simulate.ts single",
+    "simulate:matrix": "tsx src/cli/simulate.ts matrix",
+    "simulate:verify-determinism": "tsx src/cli/simulate.ts verify-determinism",
+    "audit": "npm run typecheck && npm test && npm run simulate:matrix -- --seeds 1,2,3",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.3.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
+    "lucide-react": "^0.479.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.2",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.12",
+    "@tauri-apps/cli": "^2.3.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^26.0.0",
+    "tailwindcss": "^4.0.12",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.1",
+    "vitest": "^3.0.9"
+  }
+}
