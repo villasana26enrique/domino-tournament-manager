@@ -10,6 +10,7 @@ import type {
   StandingRow,
   TournamentConfig
 } from '../domain/types.js';
+import { SeededRng } from '../prng/seeded-rng.js';
 import { calculateStandings } from './ranking-calculator.js';
 import { computeParticipationMath } from './round-count-planner.js';
 
@@ -328,4 +329,50 @@ export function substituteParticipant(input: {
         }
       : p
   );
+}
+
+/**
+ * Selects Round 2 ("Clasificatoria 2") byes in qualifying_elimination when N mod 4 != 0 (ADR-012).
+ * Prioritizes Round 1 winners (excluding players who already rested in Round 1) so no Round 1
+ * loser misses their second qualifying round. Deterministic given the tournament seed.
+ */
+export function selectQualifyingRound2Byes(input: {
+  activeParticipants: readonly Participant[];
+  r1Standings: readonly StandingRow[];
+  r1ByeParticipantIds: readonly string[];
+  byeCount: number;
+  seed: string;
+}): string[] {
+  const { activeParticipants, r1Standings, r1ByeParticipantIds, byeCount, seed } = input;
+  if (byeCount <= 0 || activeParticipants.length === 0) {
+    return [];
+  }
+
+  const r1ByeSet = new Set(r1ByeParticipantIds);
+  const eligibleNoRepeat = activeParticipants.filter((p) => !r1ByeSet.has(p.id));
+  const pool = eligibleNoRepeat.length >= byeCount ? eligibleNoRepeat : [...activeParticipants];
+
+  const standingById = new Map(r1Standings.map((s) => [s.participantId, s]));
+  const tieOrder = new SeededRng(`${seed}::qualifying-r2-byes`).shuffle(
+    pool.map((p) => p.id)
+  );
+  const tieRank = new Map(tieOrder.map((id, idx) => [id, idx]));
+
+  const sorted = [...pool].sort((a, b) => {
+    const sa = standingById.get(a.id);
+    const sb = standingById.get(b.id);
+
+    const winsDiff = (sb?.wins ?? 0) - (sa?.wins ?? 0);
+    if (winsDiff !== 0) return winsDiff;
+
+    const drawsDiff = (sb?.draws ?? 0) - (sa?.draws ?? 0);
+    if (drawsDiff !== 0) return drawsDiff;
+
+    const pointDiffDelta = (sb?.pointDiff ?? 0) - (sa?.pointDiff ?? 0);
+    if (pointDiffDelta !== 0) return pointDiffDelta;
+
+    return (tieRank.get(a.id) ?? 0) - (tieRank.get(b.id) ?? 0);
+  });
+
+  return sorted.slice(0, byeCount).map((p) => p.id);
 }

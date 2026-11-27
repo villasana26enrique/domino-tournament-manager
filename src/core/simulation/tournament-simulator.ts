@@ -15,7 +15,8 @@ import { SeededRng } from '../prng/seeded-rng.js';
 import { validateTournamentConstraints } from '../algorithms/constraint-validator.js';
 import {
   resolveFinalChampion,
-  resolveStageAdvancement
+  resolveStageAdvancement,
+  selectQualifyingRound2Byes
 } from '../algorithms/elimination-planner.js';
 import { summarizeTournamentFairness } from '../algorithms/fairness-evaluator.js';
 import { buildTournamentHistory } from '../algorithms/history.js';
@@ -131,6 +132,29 @@ export function simulateTournament(input: {
   for (let r = 1; r <= plan.selectedRounds; r++) {
     const stage = plan.eliminationStages ? plan.eliminationStages[r - 1]! : null;
     const activeNow = participants.filter((p) => p.status === 'active');
+    const standingsSoFar =
+      r > 1
+        ? calculateStandings({
+            participants,
+            completedRounds,
+            rankingMode: plan.rankingMode
+          })
+        : [];
+    const r2WinnerByes =
+      r === 2 && config.format === 'qualifying_elimination' && plan.byesPerRound > 0
+        ? selectQualifyingRound2Byes({
+            activeParticipants: activeNow,
+            r1Standings: standingsSoFar,
+            r1ByeParticipantIds: completedRounds[0]?.byes ?? [],
+            byeCount: plan.byesPerRound,
+            seed: input.seed
+          })
+        : null;
+    const plannedByesForRound = r2WinnerByes ?? (plan.plannedByesByRound[r] ?? []);
+    const futurePlannedByes =
+      r2WinnerByes !== null
+        ? { ...plan.plannedByesByRound, 2: r2WinnerByes }
+        : plan.plannedByesByRound;
 
     const generatedRound =
       r === 1
@@ -140,14 +164,10 @@ export function simulateTournament(input: {
           : generateRound({
               roundNumber: r,
               activeParticipants: activeNow,
-              plannedByes: plan.plannedByesByRound[r] ?? [],
-              futurePlannedByesByRound: plan.plannedByesByRound,
+              plannedByes: plannedByesForRound,
+              futurePlannedByesByRound: futurePlannedByes,
               history: buildTournamentHistory(participants, completedRounds),
-              standings: calculateStandings({
-                participants,
-                completedRounds,
-                rankingMode: plan.rankingMode
-              }),
+              standings: standingsSoFar,
               config,
               seed: input.seed
             });

@@ -184,9 +184,17 @@ describe('TournamentService Execution (TDD — Timer, Results, Audit, Advancemen
     const afterR1 = await service.completeRoundAndAdvance(started.id);
     expect(afterR1.rounds[0]!.eliminatedParticipantIds).toEqual([]);
 
-    // R2 (Clasif 2): R1 bye players MUST play in R2
+    // R2 (Clasif 2): R1 bye players MUST play in R2, and R2 byes go to R1 winners (ADR-012)
+    const r1WinnerIds = new Set(
+      afterR1.rounds[0]!.matches.flatMap((m) =>
+        m.winnerPair === 'A' ? [...m.pairA] : m.winnerPair === 'B' ? [...m.pairB] : []
+      )
+    );
     for (const byeId of r1Byes) {
       expect(afterR1.rounds[1]!.byes).not.toContain(byeId);
+    }
+    for (const r2ByeId of afterR1.rounds[1]!.byes) {
+      expect(r1WinnerIds.has(r2ByeId)).toBe(true);
     }
     await service.simulateCurrentRoundResults(started.id);
     const afterR2 = await service.completeRoundAndAdvance(started.id);

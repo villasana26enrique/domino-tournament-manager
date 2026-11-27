@@ -4,6 +4,20 @@ Este archivo conserva evidencia real y reproducible de cada comando de verificac
 
 ---
 
+## Ajuste Post-Fase 4 (ADR-012) — Descansos de Clasificatoria 2 para Ganadores de R1 (TDD estricto)
+
+- **Fecha de ejecución:** 2026-11-27
+- **Rama / PR:** `fix/adr-012-r2-winner-byes` → `main`
+- **Ciclo TDD (Rojo → Verde):**
+  - **Rojo:** `npm test -- tests/core/elimination-and-substitutes.test.ts tests/application/tournament-execution.test.ts` falló **4/13 pruebas** antes de implementar `selectQualifyingRound2Byes`: 3 pruebas nuevas en `Qualifying Round 2 Byes Favor R1 Winners (ADR-012)` y 1 aserción añadida en `executes full qualifying_elimination tournament` al confirmar que R2 asignaba descansos sin priorizar ganadores de R1.
+  - **Verde:** Tras implementar `selectQualifyingRound2Byes` en `src/core/algorithms/elimination-planner.ts` e integrarlo en `tournament-simulator.ts`, `TournamentService.completeRoundAndAdvance`, `tournament-planner.ts` y `rule-generator.ts`:
+    - `npm run typecheck`: **APROBADO** (`0` errores).
+    - `npm test`: **14/14 archivos, 82/82 pruebas aprobadas** en `3.59s` (`tests/core/elimination-and-substitutes.test.ts` **8/8**; `tests/application/tournament-execution.test.ts` **5/5**; `tests/core/matchmaking-properties.test.ts` **26/26** incluyendo 60 ensayos de fuzzing).
+    - `npm run build`: **APROBADO** (`tsc --noEmit && vite build` en `1.61s`).
+    - `npm run simulate:matrix -- --seeds 1,2`: **42 ejecuciones** (`0..41`) con **0 violaciones de restricciones**.
+
+---
+
 ## Fase 4 — Eliminar Torneo, PDF Offline, Modo Proyección, Respaldo JSON, Estadísticas y Responsive (TDD estricto)
 
 - **Fecha de ejecución:** 2026-11-27

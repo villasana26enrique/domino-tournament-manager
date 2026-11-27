@@ -8,6 +8,7 @@ import {
   getAvailableTournamentFormats,
   planEliminationStages,
   planTournament,
+  selectQualifyingRound2Byes,
   simulateTournament,
   substituteParticipant,
   validateTournamentConstraints,
@@ -208,5 +209,133 @@ describe('Format Eligibility & Qualifying Elimination (ADR-008)', () => {
       config
     });
     expect(violations).toEqual([]);
+  });
+});
+
+describe('Qualifying Round 2 Byes Favor R1 Winners (ADR-012)', () => {
+  it('selectQualifyingRound2Byes picks R1 winners and never R1 losers or R1 byes for N=25 and N=15', () => {
+    for (const n of [15, 25]) {
+      const participants = createSampleParticipants(n);
+      const config = {
+        ...DEFAULT_TOURNAMENT_CONFIG,
+        format: 'qualifying_elimination' as const
+      };
+      const plan = planTournament({ participants, config, seed: `adr012-${n}` });
+      const r1Gen = plan.firstRoundPreview;
+      const r1Completed: CompletedRound = {
+        ...r1Gen,
+        matches: r1Gen.matches.map((m) => ({
+          ...m,
+          matchId: `R1-T${m.tableNumber}`,
+          roundNumber: 1,
+          status: 'completed',
+          pairAScore: 100,
+          pairBScore: 60,
+          winnerPair: 'A',
+          outcome: 'pair_a_win',
+          endedBy: 'target_score'
+        }))
+      };
+      const r1Standings = calculateStandings({
+        participants,
+        completedRounds: [r1Completed],
+        rankingMode: plan.rankingMode
+      });
+      const r1Winners = new Set(
+        r1Completed.matches.flatMap((m) => [...m.pairA])
+      );
+
+      const r2Byes = selectQualifyingRound2Byes({
+        activeParticipants: participants,
+        r1Standings,
+        r1ByeParticipantIds: r1Completed.byes,
+        byeCount: n % 4,
+        seed: `adr012-${n}`
+      });
+
+      expect(r2Byes).toHaveLength(n % 4);
+      for (const id of r2Byes) {
+        expect(r1Completed.byes).not.toContain(id);
+        expect(r1Winners.has(id)).toBe(true);
+      }
+    }
+  });
+
+  it('selectQualifyingRound2Byes handles N=7 (2 R1 winners for 3 R2 byes) without consecutive byes', () => {
+    const participants = createSampleParticipants(7);
+    const config = {
+      ...DEFAULT_TOURNAMENT_CONFIG,
+      format: 'qualifying_elimination' as const
+    };
+    const plan = planTournament({ participants, config, seed: 'adr012-n7' });
+    const r1Gen = plan.firstRoundPreview;
+    const r1Completed: CompletedRound = {
+      ...r1Gen,
+      matches: r1Gen.matches.map((m) => ({
+        ...m,
+        matchId: `R1-T${m.tableNumber}`,
+        roundNumber: 1,
+        status: 'completed',
+        pairAScore: 100,
+        pairBScore: 72,
+        winnerPair: 'A',
+        outcome: 'pair_a_win',
+        endedBy: 'target_score'
+      }))
+    };
+    const r1Standings = calculateStandings({
+      participants,
+      completedRounds: [r1Completed],
+      rankingMode: plan.rankingMode
+    });
+    const r1Winners = r1Completed.matches.flatMap((m) => [...m.pairA]);
+
+    const r2Byes = selectQualifyingRound2Byes({
+      activeParticipants: participants,
+      r1Standings,
+      r1ByeParticipantIds: r1Completed.byes,
+      byeCount: 3,
+      seed: 'adr012-n7'
+    });
+
+    expect(r2Byes).toHaveLength(3);
+    expect(new Set(r2Byes).size).toBe(3);
+    for (const id of r2Byes) {
+      expect(r1Completed.byes).not.toContain(id);
+    }
+    for (const winnerId of r1Winners) {
+      expect(r2Byes).toContain(winnerId);
+    }
+  });
+
+  it('simulateTournament assigns R2 byes exclusively to R1 winners for N=15 and N=25', () => {
+    for (const n of [15, 25]) {
+      for (const seed of ['adr012-s1', 'adr012-s2', 'adr012-s7', 'adr012-s19']) {
+        const participants = createSampleParticipants(n);
+        const report = simulateTournament({
+          participantCount: n,
+          participants,
+          config: {
+            format: 'qualifying_elimination'
+          },
+          seed
+        });
+
+        expect(report.constraintViolations).toEqual([]);
+        const r1 = report.rounds[0]!;
+        const r2 = report.rounds[1]!;
+        const r1WinnerIds = new Set(
+          r1.matches.flatMap((m) =>
+            m.winnerPair === 'A' ? [...m.pairA] : m.winnerPair === 'B' ? [...m.pairB] : []
+          )
+        );
+
+        expect(r2.byes).toHaveLength(n % 4);
+        for (const id of r2.byes) {
+          expect(r1.byes).not.toContain(id);
+          expect(r1WinnerIds.has(id)).toBe(true);
+        }
+      }
+    }
   });
 });

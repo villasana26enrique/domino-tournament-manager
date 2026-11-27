@@ -16,6 +16,7 @@ import {
   replanRemainingByes,
   resolveFinalChampion,
   resolveStageAdvancement,
+  selectQualifyingRound2Byes,
   startOrResumeRoundTimer,
   substituteParticipant,
   validateMatchScore,
@@ -893,11 +894,29 @@ export class TournamentService {
     // Generate next round dynamically using updated history, standings and active players
     const nextRoundNumber = currentRound.roundNumber + 1;
     const activeRemaining = nextParticipants.filter((p) => p.status === 'active');
+    const updatedStandings = calculateStandings({
+      participants: nextParticipants,
+      completedRounds: completedRoundsDomain,
+      rankingMode
+    });
 
     let plannedByesForNext = record.plannedByesByRound[nextRoundNumber] ?? [];
     const activeSet = new Set(activeRemaining.map((p) => p.id));
     const expectedByes = activeRemaining.length % 4;
     if (
+      record.config.format === 'qualifying_elimination' &&
+      nextRoundNumber === 2 &&
+      expectedByes > 0 &&
+      record.config.maxPhysicalTables === null
+    ) {
+      plannedByesForNext = selectQualifyingRound2Byes({
+        activeParticipants: activeRemaining,
+        r1Standings: updatedStandings,
+        r1ByeParticipantIds: finalizedRound.byes,
+        byeCount: expectedByes,
+        seed: record.seed
+      });
+    } else if (
       record.config.maxPhysicalTables === null &&
       (plannedByesForNext.length !== expectedByes ||
         plannedByesForNext.some((id) => !activeSet.has(id)))
@@ -915,6 +934,11 @@ export class TournamentService {
       plannedByesForNext = replanned[nextRoundNumber] ?? [];
     }
 
+    const updatedPlannedByesByRound: Record<number, string[]> = {
+      ...record.plannedByesByRound,
+      [nextRoundNumber]: plannedByesForNext
+    };
+
     const nextStage =
       record.config.format === 'qualifying_elimination' && record.eliminationStages
         ? record.eliminationStages[nextRoundNumber - 1] ?? null
@@ -924,13 +948,9 @@ export class TournamentService {
       roundNumber: nextRoundNumber,
       activeParticipants: activeRemaining,
       plannedByes: plannedByesForNext,
-      futurePlannedByesByRound: record.plannedByesByRound,
+      futurePlannedByesByRound: updatedPlannedByesByRound,
       history: buildTournamentHistory(nextParticipants, completedRoundsDomain),
-      standings: calculateStandings({
-        participants: nextParticipants,
-        completedRounds: completedRoundsDomain,
-        rankingMode
-      }),
+      standings: updatedStandings,
       config: record.config,
       seed: record.seed
     });
@@ -950,6 +970,7 @@ export class TournamentService {
       ...record,
       currentRoundNumber: nextRoundNumber,
       participants: nextParticipants,
+      plannedByesByRound: updatedPlannedByesByRound,
       rounds: [...finalUpdatedRounds, nextPersistedRound],
       updatedAt: nowIso
     };

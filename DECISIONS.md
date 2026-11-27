@@ -90,3 +90,14 @@ Este documento registra las decisiones arquitectónicas (ADR), matemáticas y de
   3. **Respaldo y portabilidad (`exportBackupPayload` / `importBackupPayload`):** Formato JSON versionado (`schemaVersion: "1.0.0"`) validado con Zod que fusiona torneos sin borrar otros registros locales.
   4. **Modo Proyección Fullscreen (`ProjectionView`) + Keep-Awake Windows (`SetThreadExecutionState`):** Vista de alto contraste para proyectores y prevención de suspensión en Windows mientras el cronómetro o proyección estén activos.
   5. **Backlog acordado (Fase 5 / Post-MVP sin login):** Incorporar un **código/PIN local de organizador** (sin cuentas ni servidor) para proteger acciones sensibles (eliminar torneos, correcciones administrativas y herramientas de prueba como `Simular resultados (Prueba)`).
+
+## ADR-012 — Descansos de Clasificatoria 2 asignados prioritariamente a ganadores de Ronda 1
+
+- **Estado:** Aprobado (Post-Fase 4)
+- **Contexto:** En la modalidad `qualifying_elimination` cuando $N \bmod 4 \ne 0$, los descansos de Ronda 2 (Clasificatoria 2) se preasignaban aleatoriamente entre quienes no descansaron en Ronda 1. Si un perdedor de Ronda 1 (`0-1`) resultaba elegido para descansar en Ronda 2, cerraba la fase clasificatoria con 1 derrota y 0 victorias sin oportunidad de jugar su segunda partida para intentar remontar a `1-1`.
+- **Decisión:** Implementar `selectQualifyingRound2Byes` en `src/core/algorithms/elimination-planner.ts` (consumido por `tournament-simulator.ts` y `TournamentService.completeRoundAndAdvance`):
+  1. Excluir siempre a quienes ya descansaron en Ronda 1 (0 descansos consecutivos mientras $N \ge 4$).
+  2. Ordenar a los candidatos elegibles por **victorias descendente (`1-0` primero)** → empates descendente → diferencial de puntos descendente → desempate determinista con `SeededRng(`${seed}::qualifying-r2-byes`)`.
+  3. Mantener intacto el caso borde $N = 7$ (2 ganadores de R1 para 3 descansos): descansan ambos ganadores más 1 elegible que no descansó en R1.
+  4. Actualizar los textos explicativos en `tournament-planner.ts` y `rule-generator.ts`.
+- **Motivo:** Garantiza que todo perdedor de Ronda 1 juegue su segunda partida clasificatoria para intentar llegar a `1-1`, mientras quienes ya aseguraron `1-0` en Ronda 1 mantienen su invicto (100% de victorias) si descansan en Ronda 2.

@@ -29,9 +29,9 @@ export function generateTournamentRules(
       ? 'No habrá descansos en ninguna fase: todas las mesas son exactas desde la Clasificatoria 1 hasta la Gran Final.'
       : `En la Clasificatoria 1 descansarán ${math.byesPerRound} ${
           math.byesPerRound === 1 ? 'jugador elegido' : 'jugadores elegidos'
-        } al azar con pase libre a la Clasificatoria 2; en la Clasificatoria 2 juegan obligatoriamente y descansan otros ${
-          math.byesPerRound
-        } jugadores distintos. A partir de las rondas eliminatorias el cuadro queda en múltiplo exacto de 4 sin ningún descanso.`
+        } al azar con pase libre a la Clasificatoria 2; en la Clasificatoria 2 juegan obligatoriamente y ${
+          math.byesPerRound === 1 ? 'el descanso se asigna' : `los ${math.byesPerRound} descansos se asignan`
+        } prioritariamente a ganadores de la Clasificatoria 1 para que ningún perdedor de Ronda 1 pierda su segunda oportunidad. A partir de las rondas eliminatorias el cuadro queda en múltiplo exacto de 4 sin ningún descanso.`
     : math.byesPerRound === 0
       ? 'No habrá descansos: al ser múltiplo de 4, todos los participantes juegan exactamente todas las rondas.'
       : `En cada ronda descansarán ${math.byesPerRound} jugadores de forma equilibrada por límite físico de mesas.`;
