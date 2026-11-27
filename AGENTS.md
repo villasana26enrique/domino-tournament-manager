@@ -122,6 +122,9 @@ npm run typecheck
 # Ejecutar todas las pruebas TypeScript (core + application + ui)
 npm test
 
+# Ejecutar pruebas E2E en navegador real (Playwright Desktop + Móvil, requiere dist/ compilado)
+npm run build && npm run test:e2e
+
 # Modo TDD interactivo (watch)
 npm run test:watch
 

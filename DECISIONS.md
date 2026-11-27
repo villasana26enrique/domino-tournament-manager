@@ -101,3 +101,12 @@ Este documento registra las decisiones arquitectónicas (ADR), matemáticas y de
   3. Mantener intacto el caso borde $N = 7$ (2 ganadores de R1 para 3 descansos): descansan ambos ganadores más 1 elegible que no descansó en R1.
   4. Actualizar los textos explicativos en `tournament-planner.ts` y `rule-generator.ts`.
 - **Motivo:** Garantiza que todo perdedor de Ronda 1 juegue su segunda partida clasificatoria para intentar llegar a `1-1`, mientras quienes ya aseguraron `1-0` en Ronda 1 mantienen su invicto (100% de victorias) si descansan en Ronda 2.
+
+## ADR-013 — Modo Organizador con PIN local, Llave Visual por Fases y Pruebas E2E Playwright (Fase 5)
+
+- **Estado:** Aprobado (Fase 5)
+- **Decisión:**
+  1. **Modo Organizador con PIN local (`src/infrastructure/organizer-pin.ts` + `OrganizerPinModal`):** Sin cuentas ni login. El PIN de 4–6 dígitos se almacena localmente como hash con sal (`domino_tm_organizer_pin_v1`, nunca en texto plano). Por defecto arranca abierto hasta que el organizador configura un PIN; al configurarlo o recargar con PIN activo, queda bloqueado automáticamente: oculta `Simular resultados (Prueba)` y solicita PIN antes de eliminar torneos, corregir resultados administrativos o registrar sustituciones/retiros.
+  2. **Llave Visual por Fases (`EliminationBracketView.tsx`):** Visible **exclusivamente en `qualifying_elimination`** (oculta en `rounds_all_play`), dentro de la pestaña `Llave` en torneo activo, en el toggle `Llave en vivo` de `ProjectionView` y en `CompletedTournamentScreen`. Muestra la Clasificatoria (R1–R2) con línea de corte en vivo (`Top 4 / Top 8 / Top 16`), cada fase eliminatoria y el podio final.
+  3. **Pruebas E2E Playwright (`tests/e2e/tournament-phase5.spec.ts`):** Suite automatizada en navegador Chromium real para viewports desktop (`1280x800`) y móvil (`390x844`), levantando Vite automáticamente (`npm run test:e2e`).
+  4. **Alcance diferido a Fase 6:** Generación y firma/prueba del instalador Windows `.exe` (NSIS) y manual rápido de 1 página.

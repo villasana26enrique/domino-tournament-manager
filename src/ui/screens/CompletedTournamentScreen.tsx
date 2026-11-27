@@ -4,6 +4,7 @@ import {
   Award,
   BarChart3,
   Download,
+  GitBranch,
   History,
   Printer,
   Trophy,
@@ -20,6 +21,7 @@ import {
   downloadFinalReportPdf,
   downloadRulesPdf
 } from '../../infrastructure/pdf-exporter.js';
+import { EliminationBracketView } from '../components/EliminationBracketView.js';
 import { StandingsTable } from '../components/StandingsTable.js';
 
 interface CompletedTournamentScreenProps {
@@ -211,6 +213,23 @@ export function CompletedTournamentScreen({
           </div>
         </div>
       </section>
+
+      {/* Visual Elimination Bracket (qualifying_elimination only) */}
+      {tournament.config.format === 'qualifying_elimination' &&
+        tournament.eliminationStages !== null && (
+          <section className="space-y-3">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-stone-900">
+              <GitBranch className="h-4 w-4 text-emerald-700" />
+              Llave del torneo (Ruta a la Final)
+            </h2>
+            <EliminationBracketView
+              tournament={tournament}
+              standings={standings}
+              nameOf={nameOf}
+              theme="light"
+            />
+          </section>
+        )}
 
       {/* Final Standings */}
       <section className="space-y-3">

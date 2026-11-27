@@ -4,6 +4,26 @@ Este archivo conserva evidencia real y reproducible de cada comando de verificac
 
 ---
 
+## Fase 5 — PIN Local de Organizador, Llave Visual por Fases y Pruebas E2E Playwright (TDD estricto)
+
+- **Fecha de ejecución:** 2026-11-27
+- **Rama / PR:** `feature/phase-5-pin-bracket-e2e` → `main` (ADR-013)
+- **Ciclos TDD (Rojo → Verde):**
+  1. **Ciclo 1 — Store local de PIN (`src/infrastructure/organizer-pin.ts`):**
+     - **Rojo:** `npm test -- tests/infrastructure/organizer-pin.test.ts` falló (`ERR_MODULE_NOT_FOUND`) antes de crear `organizer-pin.ts`.
+     - **Verde:** Tras implementar `validatePinFormat` y `createOrganizerPinStore` (hash con sal, nunca PIN en texto plano), pasaron **3/3 pruebas**.
+  2. **Ciclo 2 — UI PIN + Llave Visual (`OrganizerPinModal.tsx`, `EliminationBracketView.tsx`, `ProjectionView.tsx`, `ActiveTournamentScreen.tsx`, `CompletedTournamentScreen.tsx`, `App.tsx`):**
+     - **Rojo:** `npm test -- tests/ui/phase5-pin-and-bracket.test.tsx` falló **2/2 pruebas** antes de implementar los componentes.
+     - **Verde:** Tras implementar `EliminationBracketView` (solo para `qualifying_elimination`), `OrganizerPinModal`, la barra superior con bloqueo y las guardas de eliminación/corrección/retiro/sustitución, pasaron todas las pruebas de Vitest (`tests/ui/phase5-pin-and-bracket.test.tsx` **2/2**).
+- **Verificación completa tras la última edición de código y pruebas:**
+  - `npm run typecheck`: **APROBADO** (`exit code 0`, `0` errores).
+  - `npm test`: **16/16 archivos, 87/87 pruebas aprobadas** en `3.41s`.
+  - `npm run build`: **APROBADO** (`tsc --noEmit && vite build`, `1.51s`).
+  - `npm run test:e2e` (Playwright Chromium sobre `dist/` servido en `127.0.0.1:1425` con `scripts/serve-dist.mjs`): **6/6 pruebas aprobadas** en `6.3s` (3 en viewport desktop `1280x800` + 3 en viewport móvil `390x844`, cubriendo `qualifying_elimination` + llave visual + proyección en vivo, `rounds_all_play` sin pestaña `Llave` + guardia de salida, y persistencia/bloqueo de PIN tras recarga).
+  - `npm run simulate:matrix -- --seeds 1,2`: **42 ejecuciones** (`0..41`) con **`Total de violaciones de restricciones: 0`**.
+
+---
+
 ## Ajuste Post-Fase 4 (ADR-012) — Descansos de Clasificatoria 2 para Ganadores de R1 (TDD estricto)
 
 - **Fecha de ejecución:** 2026-11-27
@@ -63,7 +83,6 @@ Este archivo conserva evidencia real y reproducible de cada comando de verificac
 
 ---
 
-## Pendiente en Fase 5
+## Pendiente en Fase 6
 
-- PIN / código local de organizador (sin cuentas ni login) para ocultar herramientas de prueba y proteger eliminación/correcciones.
-- Pruebas E2E Playwright, build NSIS `.exe` en Windows y prueba real en PC Windows limpia *(no se declarará funcional hasta probarse en Windows)*.
+- Build del instalador NSIS `.exe` en Windows (CI / máquina Windows), prueba real en PC Windows limpia *(no se declarará funcional hasta probarse en Windows)* y manual rápido de 1 página para organizadores.
