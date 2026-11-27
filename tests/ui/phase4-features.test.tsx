@@ -29,7 +29,7 @@ describe('Fase 4 UI Features (TDD — Delete with confirmation, Backup/Restore, 
     await service.addParticipantsBulk(active.id, 'A\nB\nC\nD');
     await service.confirmAndStartTournament(active.id);
 
-    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" />);
+    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" initialLocale="es" />);
     expect(await view.findByText('Copa Activa Borrable')).toBeInTheDocument();
 
     await user.click(view.getByRole('button', { name: /Eliminar Copa Activa Borrable/i }));
@@ -59,7 +59,7 @@ describe('Fase 4 UI Features (TDD — Delete with confirmation, Backup/Restore, 
     const targetService = createTestService('dst');
     await targetService.createDraft('Torneo Local Previo');
 
-    const view = render(<App service={targetService} runtimeLabel="Entorno de pruebas" />);
+    const view = render(<App service={targetService} runtimeLabel="Entorno de pruebas" initialLocale="es" />);
     expect(await view.findByText('Torneo Local Previo')).toBeInTheDocument();
 
     await user.click(view.getByRole('button', { name: /Respaldo local/i }));
@@ -90,7 +90,7 @@ describe('Fase 4 UI Features (TDD — Delete with confirmation, Backup/Restore, 
     await service.addParticipantsBulk(trn.id, 'P1\nP2\nP3\nP4\nP5\nP6\nP7\nP8');
     await service.confirmAndStartTournament(trn.id);
 
-    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" />);
+    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" initialLocale="es" />);
     await user.click(await view.findByRole('button', { name: /Continuar torneo/i }));
 
     await user.click(await view.findByRole('button', { name: /Modo proyección/i }));
@@ -113,7 +113,7 @@ describe('Fase 4 UI Features (TDD — Delete with confirmation, Backup/Restore, 
     await service.simulateCurrentRoundResults(trn.id);
     await service.completeRoundAndAdvance(trn.id);
 
-    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" />);
+    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" initialLocale="es" />);
     await user.click(await view.findByRole('button', { name: /Ver resumen/i }));
 
     expect(await view.findByText(/Estadísticas del torneo/i)).toBeInTheDocument();

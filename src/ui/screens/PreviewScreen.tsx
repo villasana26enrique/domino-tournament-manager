@@ -20,6 +20,12 @@ import type {
 } from '../../core/index.js';
 import type { TournamentRecord } from '../../application/ports/tournament-repository.js';
 import { downloadRulesPdf } from '../../infrastructure/pdf-exporter.js';
+import { useI18n } from '../../i18n/context.js';
+import {
+  localizeFormatAvailability,
+  localizeRulesDocument,
+  localizeStageName
+} from '../../i18n/domain-labels.js';
 
 interface PreviewScreenProps {
   tournament: TournamentRecord;
@@ -40,6 +46,7 @@ export function PreviewScreen({
   onRegenerateSeed,
   onConfirmAndStart
 }: PreviewScreenProps) {
+  const { locale, t } = useI18n();
   const participantById = new Map(tournament.participants.map((p) => [p.id, p]));
   const nameOf = (id: string) => {
     const p = participantById.get(id);
@@ -49,6 +56,17 @@ export function PreviewScreen({
   async function handleSelectFormat(format: TournamentFormat) {
     await onUpdateConfig({ format }, null);
   }
+
+  const localizedFormats = plan.availableFormats.map((option) =>
+    localizeFormatAvailability(option, plan.participantCount, locale)
+  );
+  const localizedRules = localizeRulesDocument(
+    plan.rulesDocument,
+    plan.config,
+    plan.eliminationStages,
+    locale
+  );
+  const firstStageName = localizeStageName(plan.firstRoundPreview.stageName ?? 'Ronda 1', locale);
 
   return (
     <div className="space-y-6">
@@ -61,11 +79,11 @@ export function PreviewScreen({
             className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium text-stone-500 hover:text-stone-900"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Editar participantes
+            {t.preview.editParticipants}
           </button>
-          <h1 className="text-2xl font-bold text-stone-900">Previsualización del torneo</h1>
+          <h1 className="text-2xl font-bold text-stone-900">{t.preview.title}</h1>
           <p className="text-sm text-stone-500">
-            Revisa la modalidad, las mesas iniciales y el reglamento oficial antes de iniciar{' '}
+            {t.preview.subtitlePrefix}{' '}
             <span className="font-semibold text-stone-800">{tournament.name}</span>.
           </p>
         </div>
@@ -78,7 +96,7 @@ export function PreviewScreen({
             className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-40"
           >
             <RefreshCw className="h-4 w-4" />
-            Regenerar sorteo
+            {t.preview.regenerateSeed}
           </button>
           <button
             type="button"
@@ -87,7 +105,7 @@ export function PreviewScreen({
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-40"
           >
             <Play className="h-4 w-4" />
-            Confirmar e iniciar torneo
+            {t.preview.confirmAndStart}
           </button>
         </div>
       </div>
@@ -95,10 +113,10 @@ export function PreviewScreen({
       {/* Format Selector Cards */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold tracking-wide text-stone-600 uppercase">
-          Modalidad del torneo
+          {t.preview.formatSectionTitle}
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
-          {plan.availableFormats.map((option) => {
+          {localizedFormats.map((option) => {
             const selected = plan.format === option.format;
             return (
               <button
@@ -119,11 +137,11 @@ export function PreviewScreen({
                   {selected ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-800 px-2.5 py-0.5 text-xs font-semibold text-white">
                       <CheckCircle2 className="h-3.5 w-3.5" />
-                      Seleccionada
+                      {t.preview.selectedBadge}
                     </span>
                   ) : !option.available ? (
                     <span className="rounded-full bg-stone-200 px-2.5 py-0.5 text-xs font-medium text-stone-600">
-                      Requiere múltiplo de 4
+                      {t.preview.requiresMultipleOf4}
                     </span>
                   ) : null}
                 </div>
@@ -139,57 +157,58 @@ export function PreviewScreen({
         <div className="rounded-2xl border border-stone-200 bg-white p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium text-stone-500">
             <Users className="h-3.5 w-3.5 text-emerald-700" />
-            Mesas iniciales
+            {t.preview.initialTables}
           </p>
           <p className="mt-1 text-2xl font-bold text-stone-900">{plan.tablesPerRound}</p>
           <p className="text-xs text-stone-500">
-            {plan.activePerRound} activos · {plan.byesPerRound}{' '}
-            {plan.byesPerRound === 1 ? 'descanso' : 'descansos'}
+            {t.preview.activeAndByes(plan.activePerRound, plan.byesPerRound)}
           </p>
         </div>
 
         <div className="rounded-2xl border border-stone-200 bg-white p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium text-stone-500">
             <Trophy className="h-3.5 w-3.5 text-amber-600" />
-            Rondas totales
+            {t.preview.totalRounds}
           </p>
           <p className="mt-1 text-2xl font-bold text-stone-900">{plan.selectedRounds}</p>
           <p className="text-xs text-stone-500">
             {plan.format === 'rounds_all_play'
-              ? 'Todos juegan igual (0 descansos)'
-              : 'Hasta Gran Final de 1 partida'}
+              ? t.preview.roundsAllPlayHint
+              : t.preview.roundsElimHint}
           </p>
         </div>
 
         <div className="rounded-2xl border border-stone-200 bg-white p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium text-stone-500">
             <Clock className="h-3.5 w-3.5 text-emerald-700" />
-            Duración estimada
+            {t.preview.estimatedDuration}
           </p>
           <p className="mt-1 text-2xl font-bold text-stone-900">
             ~{plan.estimatedDurationMinutes} min
           </p>
           <p className="text-xs text-stone-500">
-            {Math.round(plan.config.roundDurationSeconds / 60)} min por ronda
+            {t.preview.minutesPerRound(Math.round(plan.config.roundDurationSeconds / 60))}
           </p>
         </div>
 
         <div className="rounded-2xl border border-stone-200 bg-white p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium text-stone-500">
             <Target className="h-3.5 w-3.5 text-emerald-700" />
-            Meta de partida
+            {t.preview.matchTarget}
           </p>
-          <p className="mt-1 text-2xl font-bold text-stone-900">{plan.config.targetScore} pts</p>
-          <p className="text-xs text-stone-500">Puntos reales sin recorte</p>
+          <p className="mt-1 text-2xl font-bold text-stone-900">
+            {t.preview.pointsUnit(plan.config.targetScore)}
+          </p>
+          <p className="text-xs text-stone-500">{t.preview.uncappedPointsHint}</p>
         </div>
       </section>
 
       {/* Quick Config Controls */}
       <section className="rounded-2xl border border-stone-200 bg-white p-5">
-        <h2 className="mb-3 text-sm font-semibold text-stone-900">Ajustes rápidos</h2>
+        <h2 className="mb-3 text-sm font-semibold text-stone-900">{t.preview.quickSettings}</h2>
         <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
           <label className="space-y-1 text-xs font-medium text-stone-600">
-            <span>Objetivo de puntos</span>
+            <span>{t.preview.targetScoreLabel}</span>
             <select
               value={plan.config.targetScore}
               onChange={(e) => void onUpdateConfig({ targetScore: Number(e.target.value) })}
@@ -197,14 +216,14 @@ export function PreviewScreen({
             >
               {[75, 100, 120, 150, 200].map((pts) => (
                 <option key={pts} value={pts}>
-                  {pts} puntos
+                  {t.preview.pointsOption(pts)}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="space-y-1 text-xs font-medium text-stone-600">
-            <span>Duración de ronda</span>
+            <span>{t.preview.roundDurationLabel}</span>
             <select
               value={plan.config.roundDurationSeconds}
               onChange={(e) =>
@@ -214,7 +233,7 @@ export function PreviewScreen({
             >
               {[15, 20, 25, 30, 40].map((mins) => (
                 <option key={mins} value={mins * 60}>
-                  {mins} minutos
+                  {t.preview.minutesOption(mins)}
                 </option>
               ))}
             </select>
@@ -222,7 +241,7 @@ export function PreviewScreen({
 
           {plan.format === 'rounds_all_play' && (
             <label className="space-y-1 text-xs font-medium text-stone-600">
-              <span>Cantidad de rondas</span>
+              <span>{t.preview.roundsCountLabel}</span>
               <select
                 value={plan.selectedRounds}
                 onChange={(e) => void onUpdateConfig({}, Number(e.target.value))}
@@ -230,7 +249,7 @@ export function PreviewScreen({
               >
                 {[3, 4, 5, 6, 7].map((r) => (
                   <option key={r} value={r}>
-                    {r} rondas {r === plan.recommendedRounds ? '(Recomendado)' : ''}
+                    {t.preview.roundsOption(r, r === plan.recommendedRounds)}
                   </option>
                 ))}
               </select>
@@ -239,7 +258,7 @@ export function PreviewScreen({
 
           {plan.format === 'rounds_all_play' && (
             <label className="space-y-1 text-xs font-medium text-stone-600">
-              <span>Generación de cruces</span>
+              <span>{t.preview.pairingModeLabel}</span>
               <select
                 value={plan.config.schedulingMode}
                 onChange={(e) =>
@@ -249,8 +268,8 @@ export function PreviewScreen({
                 }
                 className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900"
               >
-                <option value="hybrid_competitive">Híbrido competitivo (Recomendado)</option>
-                <option value="fixed_schedule">Calendario fijo previo</option>
+                <option value="hybrid_competitive">{t.preview.pairingHybrid}</option>
+                <option value="fixed_schedule">{t.preview.pairingFixed}</option>
               </select>
             </label>
           )}
@@ -261,7 +280,7 @@ export function PreviewScreen({
       {plan.eliminationStages && (
         <section className="rounded-2xl border border-stone-200 bg-white p-5">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">
-            Fases eliminatorias programadas
+            {t.preview.eliminationStagesTitle}
           </h2>
           <div className="flex flex-wrap items-center gap-2">
             {plan.eliminationStages.map((stage, idx) => (
@@ -273,11 +292,13 @@ export function PreviewScreen({
                       : 'border-stone-200 bg-stone-50 text-stone-800'
                   }`}
                 >
-                  <p className="font-bold">{stage.stageName}</p>
+                  <p className="font-bold">{localizeStageName(stage.stageName, locale)}</p>
                   <p className="text-[11px] text-stone-500">
-                    {stage.expectedParticipants} jug. · {stage.tablesCount}{' '}
-                    {stage.tablesCount === 1 ? 'mesa' : 'mesas'}
-                    {stage.byesCount > 0 ? ` · ${stage.byesCount} pase libre` : ' · 0 descansos'}
+                    {t.preview.stageMeta(
+                      stage.expectedParticipants,
+                      stage.tablesCount,
+                      stage.byesCount
+                    )}
                   </p>
                 </div>
                 {idx < plan.eliminationStages!.length - 1 && (
@@ -307,9 +328,11 @@ export function PreviewScreen({
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-base font-semibold text-stone-900">
               <Shuffle className="h-4 w-4 text-emerald-700" />
-              Vista previa — {plan.firstRoundPreview.stageName ?? 'Ronda 1'}
+              {t.preview.round1PreviewTitle(firstStageName)}
             </h2>
-            <span className="font-mono text-xs text-stone-400">Semilla: {plan.seed}</span>
+            <span className="font-mono text-xs text-stone-400">
+              {t.preview.seedLabel(plan.seed)}
+            </span>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -320,22 +343,24 @@ export function PreviewScreen({
               >
                 <div className="mb-3 flex items-center justify-between">
                   <span className="rounded-lg bg-emerald-900 px-2.5 py-0.5 text-xs font-bold text-white">
-                    Mesa {m.tableNumber}
+                    {t.preview.tableLabel(m.tableNumber)}
                   </span>
                   <span className="text-[11px] font-medium text-stone-400">2 vs 2</span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="rounded-xl bg-emerald-50/80 p-2.5">
                     <p className="text-[10px] font-bold tracking-wide text-emerald-800 uppercase">
-                      Pareja A
+                      {t.preview.pairA}
                     </p>
                     <p className="mt-0.5 font-medium text-stone-900">{nameOf(m.pairA[0])}</p>
                     <p className="font-medium text-stone-900">{nameOf(m.pairA[1])}</p>
                   </div>
-                  <div className="text-center text-[10px] font-bold text-stone-400">VS</div>
+                  <div className="text-center text-[10px] font-bold text-stone-400">
+                    {t.preview.vs}
+                  </div>
                   <div className="rounded-xl bg-stone-100 p-2.5">
                     <p className="text-[10px] font-bold tracking-wide text-stone-600 uppercase">
-                      Pareja B
+                      {t.preview.pairB}
                     </p>
                     <p className="mt-0.5 font-medium text-stone-900">{nameOf(m.pairB[0])}</p>
                     <p className="font-medium text-stone-900">{nameOf(m.pairB[1])}</p>
@@ -350,8 +375,8 @@ export function PreviewScreen({
               <p className="flex items-center gap-2 text-xs font-bold text-amber-900">
                 <Coffee className="h-4 w-4 text-amber-700" />
                 {plan.format === 'qualifying_elimination'
-                  ? 'Pase libre al azar en Clasificatoria 1 (avanzan directo a Ronda 2)'
-                  : 'Descansan en Ronda 1'}
+                  ? t.preview.r1ByesQualifying
+                  : t.preview.r1ByesRegular}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {plan.firstRoundPreview.byes.map((id) => (
@@ -373,24 +398,24 @@ export function PreviewScreen({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 text-base font-semibold text-stone-900">
                 <ScrollText className="h-4 w-4 text-emerald-700" />
-                Reglamento oficial generado
+                {t.preview.generatedRulesTitle}
               </h2>
               <button
                 type="button"
                 onClick={() =>
-                  downloadRulesPdf(tournament.name, plan.rulesDocument, plan.seed)
+                  downloadRulesPdf(tournament.name, localizedRules, plan.seed, locale)
                 }
                 className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-stone-50 px-2.5 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100"
               >
                 <Download className="h-3.5 w-3.5" />
-                Descargar reglamento PDF
+                {t.preview.downloadRulesPdf}
               </button>
             </div>
             <p className="mt-2 rounded-xl bg-stone-50 p-3 text-xs leading-relaxed text-stone-700">
-              {plan.rulesDocument.summary}
+              {localizedRules.summary}
             </p>
             <div className="mt-4 space-y-4">
-              {plan.rulesDocument.sections.map((sec) => (
+              {localizedRules.sections.map((sec) => (
                 <div key={sec.id} className="space-y-1.5">
                   <h3 className="text-xs font-bold text-stone-900">{sec.title}</h3>
                   <ul className="space-y-1 pl-4 text-xs leading-relaxed text-stone-600">

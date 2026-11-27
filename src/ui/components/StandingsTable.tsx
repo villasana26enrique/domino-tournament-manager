@@ -1,4 +1,5 @@
 import type { StandingRow } from '../../core/index.js';
+import { useI18n } from '../../i18n/context.js';
 
 interface StandingsTableProps {
   rows: StandingRow[];
@@ -6,23 +7,25 @@ interface StandingsTableProps {
 }
 
 export function StandingsTable({ rows, highlightTopCount = 1 }: StandingsTableProps) {
+  const { t } = useI18n();
+
   return (
     <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-xs">
       <table className="w-full border-collapse text-left text-xs">
         <thead>
           <tr className="border-b border-stone-200 bg-stone-50 text-[11px] font-bold tracking-wide text-stone-500 uppercase">
-            <th className="px-3 py-3">Pos</th>
-            <th className="px-3 py-3">Jugador</th>
-            <th className="px-2.5 py-3 text-center">PJ</th>
-            <th className="px-2.5 py-3 text-center">V</th>
-            <th className="px-2.5 py-3 text-center">E</th>
-            <th className="px-2.5 py-3 text-center">D</th>
-            <th className="px-2.5 py-3 text-center">Pts</th>
-            <th className="px-2.5 py-3 text-center">% Efect.</th>
-            <th className="px-2.5 py-3 text-right">PF</th>
-            <th className="px-2.5 py-3 text-right">PC</th>
-            <th className="px-2.5 py-3 text-right">Dif</th>
-            <th className="px-2.5 py-3 text-center">Desc.</th>
+            <th className="px-3 py-3">{t.standings.pos}</th>
+            <th className="px-3 py-3">{t.standings.player}</th>
+            <th className="px-2.5 py-3 text-center">{t.standings.gp}</th>
+            <th className="px-2.5 py-3 text-center">{t.standings.w}</th>
+            <th className="px-2.5 py-3 text-center">{t.standings.d}</th>
+            <th className="px-2.5 py-3 text-center">{t.standings.l}</th>
+            <th className="px-2.5 py-3 text-center">{t.standings.pts}</th>
+            <th className="px-2.5 py-3 text-center">{t.standings.winPct}</th>
+            <th className="px-2.5 py-3 text-right">{t.standings.pf}</th>
+            <th className="px-2.5 py-3 text-right">{t.standings.pa}</th>
+            <th className="px-2.5 py-3 text-right">{t.standings.diff}</th>
+            <th className="px-2.5 py-3 text-center">{t.standings.byes}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-stone-100">
@@ -61,17 +64,17 @@ export function StandingsTable({ rows, highlightTopCount = 1 }: StandingsTablePr
                     <span className="font-semibold">{row.displayName}</span>
                     {row.status === 'eliminated' && (
                       <span className="rounded-full bg-stone-200 px-2 py-0.5 text-[10px] font-medium text-stone-600">
-                        Eliminado
+                        {t.standings.eliminatedBadge}
                       </span>
                     )}
                     {row.status === 'withdrawn' && (
                       <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-medium text-rose-700">
-                        Retirado
+                        {t.standings.withdrawnBadge}
                       </span>
                     )}
                     {row.isSubstitute && (
                       <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-800">
-                        Sustituto
+                        {t.standings.substituteBadge}
                       </span>
                     )}
                   </div>

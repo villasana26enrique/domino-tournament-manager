@@ -3,6 +3,9 @@ import { AlertCircle, BookOpen, Database, Home, KeyRound, Lock, Unlock, X } from
 import type { MatchEndReason, TournamentConfig, TournamentPlan } from '../core/index.js';
 import type { TournamentRecord } from '../application/ports/tournament-repository.js';
 import type { TournamentService } from '../application/tournament-service.js';
+import { I18nProvider, useI18n } from '../i18n/context.js';
+import { localizeRuntimeLabel } from '../i18n/domain-labels.js';
+import type { Locale } from '../i18n/locale.js';
 import { createOrganizerPinStore } from '../infrastructure/organizer-pin.js';
 import { BackupModal } from './components/BackupModal.js';
 import { DeleteTournamentModal } from './components/DeleteTournamentModal.js';
@@ -24,9 +27,25 @@ type Screen = 'home' | 'register' | 'preview' | 'active' | 'completed' | 'modali
 export interface AppProps {
   service: TournamentService;
   runtimeLabel: string;
+  initialLocale?: Locale;
 }
 
-export function App({ service, runtimeLabel }: AppProps) {
+export function App({ service, runtimeLabel, initialLocale }: AppProps) {
+  return (
+    <I18nProvider {...(initialLocale ? { initialLocale } : {})}>
+      <AppContent service={service} runtimeLabel={runtimeLabel} />
+    </I18nProvider>
+  );
+}
+
+function AppContent({
+  service,
+  runtimeLabel
+}: {
+  service: TournamentService;
+  runtimeLabel: string;
+}) {
+  const { locale, setLocale, t } = useI18n();
   const [screen, setScreen] = useState<Screen>('home');
   const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [current, setCurrent] = useState<TournamentRecord | null>(null);
@@ -98,7 +117,7 @@ export function App({ service, runtimeLabel }: AppProps) {
     try {
       return await fn();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Ocurrió un error inesperado.';
+      const msg = err instanceof Error ? err.message : t.app.unexpectedError;
       setErrorMessage(msg);
       return null;
     } finally {
@@ -355,10 +374,10 @@ export function App({ service, runtimeLabel }: AppProps) {
             <DominoLogo className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
             <div className="min-w-0">
               <p className="truncate text-xs font-bold tracking-tight text-stone-900 sm:text-sm">
-                Domino Tournament Manager
+                {t.app.title}
               </p>
               <p className="truncate text-[10px] text-stone-500 sm:text-[11px]">
-                Fase 5 · Gestión local offline-first
+                {t.app.subtitle}
               </p>
             </div>
           </button>
@@ -366,7 +385,7 @@ export function App({ service, runtimeLabel }: AppProps) {
           <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <span className="hidden items-center gap-1.5 rounded-full border border-stone-200 bg-stone-100 px-3 py-1 text-[11px] font-medium text-stone-600 lg:inline-flex">
               <Database className="h-3 w-3 text-emerald-700" />
-              {runtimeLabel}
+              {localizeRuntimeLabel(runtimeLabel, locale)}
             </span>
             <button
               type="button"
@@ -378,12 +397,12 @@ export function App({ service, runtimeLabel }: AppProps) {
               }`}
             >
               <Home className="h-3.5 w-3.5" />
-              Inicio
+              {t.app.homeNav}
             </button>
             <button
               type="button"
               onClick={() => navigateWithGuard('modalities')}
-              aria-label="Modalidades y reglamentos"
+              aria-label={t.app.modalitiesNav}
               className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition sm:px-3 ${
                 screen === 'modalities'
                   ? 'bg-emerald-900 text-white'
@@ -391,8 +410,8 @@ export function App({ service, runtimeLabel }: AppProps) {
               }`}
             >
               <BookOpen className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Modalidades y reglamentos</span>
-              <span className="sm:hidden">Reglas</span>
+              <span className="hidden sm:inline">{t.app.modalitiesNav}</span>
+              <span className="sm:hidden">{t.app.modalitiesShortNav}</span>
             </button>
 
             <button
@@ -413,21 +432,43 @@ export function App({ service, runtimeLabel }: AppProps) {
               {!hasOrganizerPin ? (
                 <>
                   <KeyRound className="h-3.5 w-3.5 text-stone-600" />
-                  <span className="hidden sm:inline">Proteger con PIN</span>
-                  <span className="sm:hidden">PIN</span>
+                  <span className="hidden sm:inline">{t.app.pinProtect}</span>
+                  <span className="sm:hidden">{t.app.pinShort}</span>
                 </>
               ) : organizerLocked ? (
                 <>
                   <Lock className="h-3.5 w-3.5 text-amber-700" />
-                  <span>Bloqueado</span>
+                  <span>{t.app.pinLocked}</span>
                 </>
               ) : (
                 <>
                   <Unlock className="h-3.5 w-3.5 text-emerald-700" />
-                  <span>Organizador</span>
+                  <span>{t.app.pinUnlocked}</span>
                 </>
               )}
             </button>
+
+            <div
+              role="group"
+              aria-label="Language / Idioma"
+              className="inline-flex rounded-xl border border-stone-200 bg-stone-100 p-0.5 text-[11px] font-bold"
+            >
+              {(['en', 'es'] as const).map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  aria-pressed={locale === code}
+                  onClick={() => setLocale(code)}
+                  className={`rounded-lg px-2 py-1 uppercase transition ${
+                    locale === code
+                      ? 'bg-white text-emerald-900 shadow-xs'
+                      : 'text-stone-500 hover:text-stone-900'
+                  }`}
+                >
+                  {code.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </nav>
         </div>
       </header>
@@ -446,7 +487,7 @@ export function App({ service, runtimeLabel }: AppProps) {
             <button
               type="button"
               onClick={() => setErrorMessage(null)}
-              aria-label="Cerrar aviso"
+              aria-label={t.app.closeAlert}
               className="rounded-lg p-1 hover:bg-rose-100"
             >
               <X className="h-4 w-4" />
@@ -460,9 +501,10 @@ export function App({ service, runtimeLabel }: AppProps) {
             busy={busy}
             onCreateTournament={handleCreateTournament}
             onOpenTournament={handleOpenTournament}
-            onRequestDeleteTournament={(t) =>
-              requireOrganizerAction(`eliminar "${t.name}"`, () =>
-                setPendingDeleteTournament(t)
+            onRequestDeleteTournament={(item) =>
+              requireOrganizerAction(
+                locale === 'en' ? `delete "${item.name}"` : `eliminar "${item.name}"`,
+                () => setPendingDeleteTournament(item)
               )
             }
             onOpenBackup={() => setBackupModalOpen(true)}

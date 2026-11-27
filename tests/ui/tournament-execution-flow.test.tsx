@@ -35,7 +35,7 @@ async function seedAndStartSixPlayerElimination(
   );
   await service.confirmAndStartTournament(draft.id);
 
-  const view = render(<App service={service} runtimeLabel="Entorno de pruebas" />);
+  const view = render(<App service={service} runtimeLabel="Entorno de pruebas" initialLocale="es" />);
   const continueBtn = await view.findByRole('button', { name: /Continuar torneo/i });
   await user.click(continueBtn);
   return view;

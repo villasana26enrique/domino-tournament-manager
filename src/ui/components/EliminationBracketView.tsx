@@ -1,6 +1,8 @@
 import { ArrowRight, CheckCircle2, Crown, GitBranch, Trophy } from 'lucide-react';
 import type { StandingRow } from '../../core/index.js';
 import type { TournamentRecord } from '../../application/ports/tournament-repository.js';
+import { useI18n } from '../../i18n/context.js';
+import { localizeStageName } from '../../i18n/domain-labels.js';
 
 interface EliminationBracketViewProps {
   tournament: TournamentRecord;
@@ -15,6 +17,7 @@ export function EliminationBracketView({
   nameOf,
   theme = 'light'
 }: EliminationBracketViewProps) {
+  const { locale, t } = useI18n();
   const stages = tournament.eliminationStages;
   if (tournament.config.format !== 'qualifying_elimination' || !stages || stages.length < 3) {
     return null;
@@ -23,6 +26,7 @@ export function EliminationBracketView({
   const isDark = theme === 'dark';
   const knockoutStages = stages.slice(2);
   const firstKnockout = knockoutStages[0]!;
+  const firstKnockoutName = localizeStageName(firstKnockout.stageName, locale);
   const cutCount = firstKnockout.expectedParticipants;
   const knockoutStarted = tournament.rounds.some((r) => r.roundNumber >= 3);
 
@@ -49,15 +53,15 @@ export function EliminationBracketView({
       >
         <div className="flex items-center gap-2 text-xs font-bold sm:text-sm">
           <GitBranch className="h-4 w-4 shrink-0 text-emerald-500" />
-          <span>Ruta a la Final</span>
+          <span>{t.bracket.roadToFinal}</span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium opacity-90">
-          <span>Clasificatoria (R1–R2)</span>
+          <span>{t.bracket.qualifyingTitle}</span>
           {knockoutStages.map((s) => (
             <span key={s.roundNumber} className="inline-flex items-center gap-1.5">
               <ArrowRight className="h-3 w-3 opacity-60" />
               <span>
-                {s.stageName} ({s.expectedParticipants})
+                {localizeStageName(s.stageName, locale)} ({s.expectedParticipants})
               </span>
             </span>
           ))}
@@ -69,15 +73,13 @@ export function EliminationBracketView({
         <div className="flex min-w-max items-stretch gap-4">
           {/* Column 1: Qualifying Stage + Cut Line */}
           <section
-            aria-label="Clasificatoria y corte"
+            aria-label={t.bracket.qualifyingTitle}
             className={`flex w-72 shrink-0 flex-col rounded-2xl border p-4 ${cardSurface}`}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-bold">Clasificatoria (R1–R2)</h3>
-                <p className={`text-[11px] ${mutedText}`}>
-                  Corte exacto a {cutCount} jugadores
-                </p>
+                <h3 className="text-sm font-bold">{t.bracket.qualifyingTitle}</h3>
+                <p className={`text-[11px] ${mutedText}`}>{t.bracket.exactCutTo(cutCount)}</p>
               </div>
               <span
                 className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
@@ -90,7 +92,7 @@ export function EliminationBracketView({
                       : 'bg-amber-100 text-amber-800'
                 }`}
               >
-                {knockoutStarted ? 'Corte definido' : 'En juego'}
+                {knockoutStarted ? t.bracket.cutDefined : t.bracket.inProgress}
               </span>
             </div>
 
@@ -101,8 +103,8 @@ export function EliminationBracketView({
                 }`}
               >
                 {knockoutStarted
-                  ? `Clasificados a ${firstKnockout.stageName} (${qualifiers.length})`
-                  : `Zona de clasificación (Top ${cutCount})`}
+                  ? t.bracket.qualifiedTo(firstKnockoutName, qualifiers.length)
+                  : t.bracket.cutZone(cutCount)}
               </p>
 
               {qualifiers.map((row, idx) => (
@@ -121,7 +123,9 @@ export function EliminationBracketView({
                     {row.displayName}
                   </span>
                   <span className="shrink-0 font-mono text-[11px] font-semibold">
-                    {row.wins}V-{row.losses}D ({row.pointDiff >= 0 ? `+${row.pointDiff}` : row.pointDiff})
+                    {row.wins}
+                    {t.standings.w}-{row.losses}
+                    {t.standings.l} ({row.pointDiff >= 0 ? `+${row.pointDiff}` : row.pointDiff})
                   </span>
                 </div>
               ))}
@@ -130,7 +134,7 @@ export function EliminationBracketView({
             {belowCut.length > 0 && (
               <div className="mt-3 space-y-1.5 border-t border-dashed border-stone-400/40 pt-3">
                 <p className={`text-[10px] font-bold uppercase ${mutedText}`}>
-                  {knockoutStarted ? 'Eliminados en corte' : 'Por debajo del corte'}
+                  {knockoutStarted ? t.bracket.eliminatedAtCut : t.bracket.belowCut}
                 </p>
                 {belowCut.map((row, idx) => (
                   <div
@@ -143,7 +147,9 @@ export function EliminationBracketView({
                       #{cutCount + idx + 1} {row.displayName}
                     </span>
                     <span className="shrink-0 font-mono">
-                      {row.wins}V-{row.losses}D
+                      {row.wins}
+                      {t.standings.w}-{row.losses}
+                      {t.standings.l}
                     </span>
                   </div>
                 ))}
@@ -151,25 +157,25 @@ export function EliminationBracketView({
             )}
           </section>
 
-          {/* Knockout Columns: Cuartos -> Semifinal -> Gran Final */}
+          {/* Knockout Columns: Quarterfinals -> Semifinals -> Grand Final */}
           {knockoutStages.map((stage) => {
             const persistedRound = tournament.rounds.find(
               (r) => r.roundNumber === stage.roundNumber
             );
             const isFinal = stage.phase === 'final';
+            const stageTitle = localizeStageName(stage.stageName, locale);
 
             return (
               <section
                 key={stage.roundNumber}
-                aria-label={stage.stageName}
+                aria-label={stageTitle}
                 className={`flex w-72 shrink-0 flex-col rounded-2xl border p-4 ${cardSurface}`}
               >
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-sm font-bold">{stage.stageName}</h3>
+                    <h3 className="text-sm font-bold">{stageTitle}</h3>
                     <p className={`text-[11px] ${mutedText}`}>
-                      {stage.expectedParticipants} jugadores · {stage.tablesCount}{' '}
-                      {stage.tablesCount === 1 ? 'mesa' : 'mesas'}
+                      {t.bracket.playersTables(stage.expectedParticipants, stage.tablesCount)}
                     </p>
                   </div>
                   {persistedRound ? (
@@ -184,7 +190,9 @@ export function EliminationBracketView({
                             : 'bg-amber-100 text-amber-800'
                       }`}
                     >
-                      {persistedRound.status === 'completed' ? 'Definida' : 'En juego'}
+                      {persistedRound.status === 'completed'
+                        ? t.bracket.stageDefined
+                        : t.bracket.stageActive}
                     </span>
                   ) : (
                     <span
@@ -192,7 +200,7 @@ export function EliminationBracketView({
                         isDark ? 'bg-stone-800 text-stone-400' : 'bg-stone-100 text-stone-500'
                       }`}
                     >
-                      Pendiente
+                      {t.bracket.stagePending}
                     </span>
                   )}
                 </div>
@@ -202,7 +210,7 @@ export function EliminationBracketView({
                     persistedRound.matches.map((match) => {
                       const pairAWon = match.winnerPair === 'A';
                       const pairBWon = match.winnerPair === 'B';
-                      const winLabel = isFinal ? 'Campeones' : 'Avanza';
+                      const winLabel = isFinal ? t.bracket.championsTag : t.bracket.advancesTag;
 
                       return (
                         <article
@@ -214,11 +222,13 @@ export function EliminationBracketView({
                           }`}
                         >
                           <div className="mb-2 flex items-center justify-between text-[11px]">
-                            <span className="font-bold">Mesa {match.tableNumber}</span>
+                            <span className="font-bold">
+                              {t.bracket.tableNumber(match.tableNumber)}
+                            </span>
                             <span className={`font-mono font-bold ${mutedText}`}>
                               {match.status === 'completed'
                                 ? `${match.pairAScore} - ${match.pairBScore}`
-                                : 'Por jugar'}
+                                : t.bracket.toBePlayed}
                             </span>
                           </div>
 
@@ -235,7 +245,7 @@ export function EliminationBracketView({
                               }`}
                             >
                               <div className="flex items-center justify-between text-[10px] font-bold uppercase">
-                                <span>Pareja A</span>
+                                <span>{t.bracket.pairA}</span>
                                 {pairAWon && (
                                   <span className="inline-flex items-center gap-0.5 text-emerald-600">
                                     <CheckCircle2 className="h-3 w-3" />
@@ -259,7 +269,7 @@ export function EliminationBracketView({
                               }`}
                             >
                               <div className="flex items-center justify-between text-[10px] font-bold uppercase">
-                                <span>Pareja B</span>
+                                <span>{t.bracket.pairB}</span>
                                 {pairBWon && (
                                   <span className="inline-flex items-center gap-0.5 text-emerald-600">
                                     <CheckCircle2 className="h-3 w-3" />
@@ -280,9 +290,9 @@ export function EliminationBracketView({
                         key={idx}
                         className={`rounded-xl border border-dashed p-3.5 text-xs ${placeholderSurface}`}
                       >
-                        <p className="font-bold">Mesa {idx + 1} · Por definir</p>
+                        <p className="font-bold">{t.bracket.tableTbd(idx + 1)}</p>
                         <p className="mt-1 text-[11px] opacity-85">
-                          Esperando clasificados de la fase anterior.
+                          {t.bracket.waitingPreviousStage}
                         </p>
                       </div>
                     ))
@@ -294,7 +304,7 @@ export function EliminationBracketView({
 
           {/* Final Column: Champion Card */}
           <section
-            aria-label="Campeón del torneo"
+            aria-label={t.bracket.championHeading}
             className={`flex w-64 shrink-0 flex-col justify-center rounded-2xl border p-4 ${
               tournament.finalChampion
                 ? isDark
@@ -309,7 +319,7 @@ export function EliminationBracketView({
                   tournament.finalChampion ? 'text-amber-500' : 'opacity-60'
                 }`}
               />
-              <span>Campeón</span>
+              <span>{t.bracket.championHeading}</span>
             </div>
 
             {tournament.finalChampion ? (
@@ -323,14 +333,15 @@ export function EliminationBracketView({
                 >
                   <p className="flex items-center gap-1 text-[10px] font-bold text-amber-600 uppercase">
                     <Crown className="h-3.5 w-3.5" />
-                    Campeón Individual
+                    {t.bracket.individualChampion}
                   </p>
                   <p className="mt-1 text-base font-extrabold">
                     {tournament.finalChampion.individualChampion.displayName}
                   </p>
                   <p className={`text-[11px] ${mutedText}`}>
-                    {tournament.finalChampion.individualChampion.wins}V -{' '}
-                    {tournament.finalChampion.individualChampion.losses}D · Dif{' '}
+                    {tournament.finalChampion.individualChampion.wins}
+                    {t.standings.w} - {tournament.finalChampion.individualChampion.losses}
+                    {t.standings.l} · {t.standings.diff}{' '}
                     {tournament.finalChampion.individualChampion.pointDiff >= 0
                       ? `+${tournament.finalChampion.individualChampion.pointDiff}`
                       : tournament.finalChampion.individualChampion.pointDiff}
@@ -345,7 +356,7 @@ export function EliminationBracketView({
                   }`}
                 >
                   <p className="text-[10px] font-bold text-emerald-700 uppercase">
-                    Pareja Ganadora Final
+                    {t.bracket.winningFinalPair}
                   </p>
                   <p className="mt-1 font-semibold">
                     {tournament.finalChampion.winningPair[0].displayName} &amp;{' '}
@@ -355,10 +366,8 @@ export function EliminationBracketView({
               </div>
             ) : (
               <div className="mt-3 text-xs">
-                <p className="font-bold">Por definir</p>
-                <p className="mt-1 text-[11px] opacity-85">
-                  Se proclama al cierre de la Gran Final.
-                </p>
+                <p className="font-bold">{t.bracket.tbdTitle}</p>
+                <p className="mt-1 text-[11px] opacity-85">{t.bracket.tbdChampionDesc}</p>
               </div>
             )}
           </section>

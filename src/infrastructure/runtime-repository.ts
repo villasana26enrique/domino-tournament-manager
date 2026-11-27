@@ -8,7 +8,7 @@ export function isTauriRuntime(): boolean {
 
 export function createRuntimeRepository(): {
   repository: TournamentRepository;
-  runtimeLabel: 'SQLite local (Tauri)' | 'Almacenamiento local del navegador (Vista previa)';
+  runtimeLabel: 'SQLite local (Tauri)' | 'Almacenamiento local del navegador';
 } {
   if (isTauriRuntime()) {
     return {
@@ -19,6 +19,6 @@ export function createRuntimeRepository(): {
 
   return {
     repository: new BrowserLocalRepository(window.localStorage),
-    runtimeLabel: 'Almacenamiento local del navegador (Vista previa)'
+    runtimeLabel: 'Almacenamiento local del navegador'
   };
 }

@@ -1,5 +1,6 @@
 import { DomainValidationError } from '../domain/errors.js';
 import type {
+  CoreLocale,
   EliminationStagePlan,
   GeneratedRound,
   Participant,
@@ -34,10 +35,12 @@ export function planTournament(input: {
   config: TournamentConfig;
   seed: string;
   overrideRounds?: number;
+  locale?: CoreLocale;
 }): TournamentPlan {
   const config = validateTournamentConfig(input.config);
   const participants = validateParticipants(input.participants);
   const seed = validateSeed(input.seed);
+  const locale = input.locale ?? 'es';
 
   const active = participants
     .filter((p) => p.status === 'active')
@@ -136,7 +139,7 @@ export function planTournament(input: {
       warnings
     };
 
-    const rulesDocument = generateTournamentRules(syntheticRoundPlan, config, stages);
+    const rulesDocument = generateTournamentRules(syntheticRoundPlan, config, stages, locale);
 
     return {
       seed,
@@ -216,7 +219,7 @@ export function planTournament(input: {
     fixedSchedulePreview = generatedRounds;
   }
 
-  const rulesDocument = generateTournamentRules(roundPlan, config, null);
+  const rulesDocument = generateTournamentRules(roundPlan, config, null, locale);
 
   return {
     seed,

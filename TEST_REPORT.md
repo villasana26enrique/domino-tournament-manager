@@ -4,6 +4,26 @@ Este archivo conserva evidencia real y reproducible de cada comando de verificac
 
 ---
 
+## Bilingüe `EN` (principal) + `ES` con autodetección (ADR-014 — TDD estricto)
+
+- **Fecha de ejecución:** 2026-11-27
+- **Rama / PR:** `feature/i18n-en-es` → `main`
+- **Ciclos TDD (Rojo → Verde):**
+  1. **Ciclo 1 — Core i18n, detección de idioma, reglamento y PDFs en inglés (`tests/i18n/i18n-and-localization.test.ts`):**
+     - **Rojo:** Falló (`ERR_MODULE_NOT_FOUND` para `src/i18n/locale.js`) antes de implementar `src/i18n/`.
+     - **Verde:** Tras implementar `CoreLocale`, `generateTournamentRules(..., 'en')`, `src/i18n/*` (`en.ts`, `es.ts`, `locale.ts`, `domain-labels.ts`, `context.tsx`) y `pdf-exporter.ts` bilingüe, pasaron **5/5 pruebas** (incluyendo paridad exacta de claves `en`/`es` y bytes `%PDF-` válidos).
+  2. **Ciclo 2 — UI completa bilingüe y autodetección (`tests/ui/i18n-bilingual.test.tsx`):**
+     - **Rojo:** Falló **2/2 pruebas** antes de cablear `I18nProvider`, el selector `EN | ES` y los diccionarios en pantallas y modales.
+     - **Verde:** Tras actualizar `index.html`, `App.tsx`, todas las pantallas y componentes, pasaron **2/2 pruebas** nuevas y toda la suite previa (**18/18 archivos, 94/94 pruebas**).
+- **Verificación completa tras la última edición de código y pruebas:**
+  - `npm run typecheck`: **APROBADO** (`exit code 0`, `0` errores).
+  - `npm test`: **18/18 archivos, 94/94 pruebas aprobadas** en `3.56s`.
+  - `npm run build`: **APROBADO** (`tsc --noEmit && vite build`, `1.64s`).
+  - `npm run test:e2e`: **8/8 pruebas Playwright aprobadas** (`5.4s`, 4 en desktop `1280x800` + 4 en móvil `390x844` cubriendo flujo completo en inglés, llave visual, PIN de organizador, cambio persistente `EN <-> ES` y autodetección `es-ES`).
+  - `npm run simulate:matrix -- --seeds 1,2`: **42 ejecuciones** (`0..41`) con **`Total de violaciones de restricciones: 0`**.
+
+---
+
 ## Fase 5 — PIN Local de Organizador, Llave Visual por Fases y Pruebas E2E Playwright (TDD estricto)
 
 - **Fecha de ejecución:** 2026-11-27
