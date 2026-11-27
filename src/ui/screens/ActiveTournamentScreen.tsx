@@ -8,6 +8,7 @@ import {
   Download,
   Edit3,
   FlaskConical,
+  GitBranch,
   History,
   Lock,
   Maximize2,
@@ -26,17 +27,20 @@ import type {
 import type { SyncTimerOutcome } from '../../application/tournament-service.js';
 import { downloadRulesPdf } from '../../infrastructure/pdf-exporter.js';
 import { setKeepAwake } from '../../infrastructure/power-manager.js';
+import { EliminationBracketView } from '../components/EliminationBracketView.js';
 import { MatchResultModal } from '../components/MatchResultModal.js';
 import { ProjectionView } from '../components/ProjectionView.js';
 import { RoundTimerPanel } from '../components/RoundTimerPanel.js';
 import { StandingsTable } from '../components/StandingsTable.js';
 
-type TabId = 'tables' | 'standings' | 'participants' | 'rules_audit';
+type TabId = 'tables' | 'standings' | 'bracket' | 'participants' | 'rules_audit';
 
 interface ActiveTournamentScreenProps {
   tournament: TournamentRecord;
   standings: StandingRow[];
   busy: boolean;
+  organizerLocked?: boolean;
+  onRequireOrganizerAction?: (actionLabel: string, action: () => void) => void;
   onRequestLeave: () => void;
   onStartRoundTimer: () => Promise<void>;
   onPauseRoundTimer: () => Promise<void>;
@@ -59,6 +63,8 @@ export function ActiveTournamentScreen({
   tournament,
   standings,
   busy,
+  organizerLocked = false,
+  onRequireOrganizerAction,
   onRequestLeave,
   onStartRoundTimer,
   onPauseRoundTimer,
@@ -107,6 +113,18 @@ export function ActiveTournamentScreen({
     currentRound !== undefined &&
     (currentRound.phase === 'final' ||
       currentRound.roundNumber >= tournament.plannedRounds);
+
+  const hasBracket =
+    tournament.config.format === 'qualifying_elimination' &&
+    tournament.eliminationStages !== null;
+
+  function runProtected(actionLabel: string, action: () => void) {
+    if (organizerLocked && onRequireOrganizerAction) {
+      onRequireOrganizerAction(actionLabel, action);
+      return;
+    }
+    action();
+  }
 
   async function handleSaveMatchResult(input: {
     matchId: string;
@@ -202,6 +220,9 @@ export function ActiveTournamentScreen({
           [
             { id: 'tables', label: 'Mesas y resultados', icon: Table2 },
             { id: 'standings', label: 'Clasificación', icon: Award },
+            ...(hasBracket
+              ? [{ id: 'bracket', label: 'Llave', icon: GitBranch } as const]
+              : []),
             { id: 'participants', label: 'Participantes', icon: Users },
             { id: 'rules_audit', label: 'Reglamento y auditoría', icon: ScrollText }
           ] as const
@@ -253,7 +274,7 @@ export function ActiveTournamentScreen({
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
-              {!allMatchesRecorded && (
+              {!allMatchesRecorded && !organizerLocked && (
                 <button
                   type="button"
                   disabled={busy}
@@ -354,7 +375,11 @@ export function ActiveTournamentScreen({
                   <button
                     type="button"
                     disabled={busy}
-                    onClick={() => setEditingMatch(m)}
+                    onClick={() =>
+                      completed
+                        ? runProtected(`corregir la Mesa ${m.tableNumber}`, () => setEditingMatch(m))
+                        : setEditingMatch(m)
+                    }
                     className={`mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
                       completed
                         ? 'border border-stone-200 bg-stone-50 text-stone-700 hover:bg-stone-100'
@@ -422,6 +447,16 @@ export function ActiveTournamentScreen({
         </div>
       )}
 
+      {/* Tab 2b: Llave Visual (solo Clasificatoria + Eliminaciones) */}
+      {activeTab === 'bracket' && hasBracket && (
+        <EliminationBracketView
+          tournament={tournament}
+          standings={standings}
+          nameOf={nameOf}
+          theme="light"
+        />
+      )}
+
       {/* Tab 3: Participantes y contingencias */}
       {activeTab === 'participants' && (
         <div className="space-y-4">
@@ -470,11 +505,13 @@ export function ActiveTournamentScreen({
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => {
-                        setSubTargetId(p.id);
-                        setSubName('');
-                        setWithdrawTargetId(null);
-                      }}
+                      onClick={() =>
+                        runProtected(`sustituir a ${p.displayName}`, () => {
+                          setSubTargetId(p.id);
+                          setSubName('');
+                          setWithdrawTargetId(null);
+                        })
+                      }
                       className="inline-flex items-center gap-1 rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50"
                     >
                       <UserPlus className="h-3.5 w-3.5 text-emerald-700" />
@@ -483,10 +520,12 @@ export function ActiveTournamentScreen({
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => {
-                        setWithdrawTargetId(p.id);
-                        setSubTargetId(null);
-                      }}
+                      onClick={() =>
+                        runProtected(`retirar a ${p.displayName}`, () => {
+                          setWithdrawTargetId(p.id);
+                          setSubTargetId(null);
+                        })
+                      }
                       className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
                     >
                       <UserMinus className="h-3.5 w-3.5" />
@@ -665,6 +704,8 @@ export function ActiveTournamentScreen({
           round={currentRound}
           warningBeforeEndSeconds={tournament.config.warningBeforeEndSeconds}
           nameOf={nameOf}
+          tournament={tournament}
+          standings={standings}
           onExit={() => setProjectionOpen(false)}
         />
       )}

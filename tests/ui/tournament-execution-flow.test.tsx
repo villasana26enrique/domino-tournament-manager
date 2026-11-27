@@ -135,7 +135,7 @@ describe('Fase 3 UI Flow (TDD — Leave Guard, Timer, Results, Audit & Champion)
 
     // Completed Tournament Screen
     expect((await view.findAllByText(/Torneo finalizado/i)).length).toBeGreaterThan(0);
-    expect(view.getByText(/Campeón Individual/i)).toBeInTheDocument();
+    expect(view.getAllByText(/Campeón Individual/i).length).toBeGreaterThan(0);
     expect(view.getByText(/Pareja Ganadora de la Final/i)).toBeInTheDocument();
   });
 });

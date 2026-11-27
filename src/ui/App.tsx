@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, BookOpen, Database, Home, X } from 'lucide-react';
+import { AlertCircle, BookOpen, Database, Home, KeyRound, Lock, Unlock, X } from 'lucide-react';
 import type { MatchEndReason, TournamentConfig, TournamentPlan } from '../core/index.js';
 import type { TournamentRecord } from '../application/ports/tournament-repository.js';
 import type { TournamentService } from '../application/tournament-service.js';
+import { createOrganizerPinStore } from '../infrastructure/organizer-pin.js';
 import { BackupModal } from './components/BackupModal.js';
 import { DeleteTournamentModal } from './components/DeleteTournamentModal.js';
 import { DominoLogo } from './components/DominoLogo.js';
 import { LeaveTournamentModal } from './components/LeaveTournamentModal.js';
+import {
+  OrganizerPinModal,
+  type OrganizerPinModalMode
+} from './components/OrganizerPinModal.js';
 import { ActiveTournamentScreen } from './screens/ActiveTournamentScreen.js';
 import { CompletedTournamentScreen } from './screens/CompletedTournamentScreen.js';
 import { HomeScreen } from './screens/HomeScreen.js';
@@ -32,6 +37,30 @@ export function App({ service, runtimeLabel }: AppProps) {
   const [pendingDeleteTournament, setPendingDeleteTournament] =
     useState<TournamentRecord | null>(null);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
+
+  const organizerPinStore = useMemo(() => createOrganizerPinStore(), []);
+  const [hasOrganizerPin, setHasOrganizerPin] = useState(() => organizerPinStore.hasPin());
+  const [organizerLocked, setOrganizerLocked] = useState(() => organizerPinStore.hasPin());
+  const [pinModal, setPinModal] = useState<{
+    mode: OrganizerPinModalMode;
+    actionLabel?: string;
+    onUnlocked?: () => void;
+  } | null>(null);
+
+  const requireOrganizerAction = useCallback(
+    (actionLabel: string, action: () => void) => {
+      if (!organizerLocked) {
+        action();
+        return;
+      }
+      setPinModal({
+        mode: 'unlock',
+        actionLabel,
+        onUnlocked: action
+      });
+    },
+    [organizerLocked]
+  );
 
   const refreshList = useCallback(async () => {
     const items = await service.listTournaments();
@@ -329,7 +358,7 @@ export function App({ service, runtimeLabel }: AppProps) {
                 Domino Tournament Manager
               </p>
               <p className="truncate text-[10px] text-stone-500 sm:text-[11px]">
-                Fase 4 · Gestión local offline-first
+                Fase 5 · Gestión local offline-first
               </p>
             </div>
           </button>
@@ -365,6 +394,40 @@ export function App({ service, runtimeLabel }: AppProps) {
               <span className="hidden sm:inline">Modalidades y reglamentos</span>
               <span className="sm:hidden">Reglas</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPinModal({
+                  mode: !hasOrganizerPin ? 'setup' : organizerLocked ? 'unlock' : 'manage'
+                })
+              }
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-semibold transition sm:px-3 ${
+                !hasOrganizerPin
+                  ? 'border-stone-300 bg-white text-stone-700 hover:bg-stone-100'
+                  : organizerLocked
+                    ? 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                    : 'border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+              }`}
+            >
+              {!hasOrganizerPin ? (
+                <>
+                  <KeyRound className="h-3.5 w-3.5 text-stone-600" />
+                  <span className="hidden sm:inline">Proteger con PIN</span>
+                  <span className="sm:hidden">PIN</span>
+                </>
+              ) : organizerLocked ? (
+                <>
+                  <Lock className="h-3.5 w-3.5 text-amber-700" />
+                  <span>Bloqueado</span>
+                </>
+              ) : (
+                <>
+                  <Unlock className="h-3.5 w-3.5 text-emerald-700" />
+                  <span>Organizador</span>
+                </>
+              )}
+            </button>
           </nav>
         </div>
       </header>
@@ -397,7 +460,11 @@ export function App({ service, runtimeLabel }: AppProps) {
             busy={busy}
             onCreateTournament={handleCreateTournament}
             onOpenTournament={handleOpenTournament}
-            onRequestDeleteTournament={(t) => setPendingDeleteTournament(t)}
+            onRequestDeleteTournament={(t) =>
+              requireOrganizerAction(`eliminar "${t.name}"`, () =>
+                setPendingDeleteTournament(t)
+              )
+            }
             onOpenBackup={() => setBackupModalOpen(true)}
             onOpenModalities={() => setScreen('modalities')}
           />
@@ -433,6 +500,8 @@ export function App({ service, runtimeLabel }: AppProps) {
             tournament={current}
             standings={liveStandings}
             busy={busy}
+            organizerLocked={organizerLocked}
+            onRequireOrganizerAction={requireOrganizerAction}
             onRequestLeave={() => navigateWithGuard('home')}
             onStartRoundTimer={handleStartRoundTimer}
             onPauseRoundTimer={handlePauseRoundTimer}
@@ -486,6 +555,35 @@ export function App({ service, runtimeLabel }: AppProps) {
           onClose={() => setBackupModalOpen(false)}
           onExportBackup={handleExportBackup}
           onImportBackup={handleImportBackup}
+        />
+      )}
+
+      {pinModal && (
+        <OrganizerPinModal
+          mode={pinModal.mode}
+          {...(pinModal.actionLabel ? { actionDescription: pinModal.actionLabel } : {})}
+          onClose={() => setPinModal(null)}
+          onSetPin={(pin) => {
+            organizerPinStore.setPin(pin);
+            setHasOrganizerPin(true);
+            setOrganizerLocked(true);
+          }}
+          onVerifyAndUnlock={(pin) => {
+            const ok = organizerPinStore.verifyPin(pin);
+            if (!ok) return false;
+            setOrganizerLocked(false);
+            const callback = pinModal.onUnlocked;
+            if (callback) callback();
+            return true;
+          }}
+          onLockNow={() => setOrganizerLocked(true)}
+          onClearPin={(currentPin) => {
+            const ok = organizerPinStore.clearPin(currentPin);
+            if (!ok) return false;
+            setHasOrganizerPin(false);
+            setOrganizerLocked(false);
+            return true;
+          }}
         />
       )}
     </div>
