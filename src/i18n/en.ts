@@ -11,7 +11,9 @@ export const en = {
     pinShort: 'PIN',
     pinLocked: 'Locked',
     pinUnlocked: 'Organizer',
-    installApp: 'Install app'
+    installApp: 'Install app',
+    getPro: 'Get Pro ($10)',
+    proActive: 'Pro'
   },
   home: {
     badge: 'Offline-first · Rotating Pairs · Fair & Auditable',
@@ -48,6 +50,14 @@ export const en = {
     sidebarTimeRuleTitle: 'Time expiration rule',
     sidebarTimeRuleDesc:
       'When the 25-minute clock expires, tables finish only the hand in progress and record exact points. Tied scores count as a draw (no sudden death).',
+    sidebarProTitle: 'Pro Edition — $10 lifetime',
+    sidebarProDesc:
+      'Host 17+ players, brand the TV screen & PDFs with your club logo/name, and export WhatsApp champion cards.',
+    sidebarProButton: 'Get Pro ($10) / Activate key',
+    sidebarBrandingTitle: 'Club Branding & Pro License',
+    sidebarBrandingDesc:
+      'Your Pro license is active on this device. Customize your club name and logo for TV & PDFs.',
+    sidebarBrandingButton: 'Manage Pro & Club Branding',
     status: {
       draft: 'Draft',
       ready: 'Ready',
@@ -82,7 +92,12 @@ export const en = {
     emptyRoster: 'No players registered in this tournament yet.',
     saveNameAria: 'Save name',
     editPlayerAria: (name: string) => `Edit ${name}`,
-    removePlayerAria: (name: string) => `Remove ${name}`
+    removePlayerAria: (name: string) => `Remove ${name}`,
+    freeLimitHint: (count: number, max: number) => `Free tier: ${count} / ${max} players`,
+    freeLimitReached: (max: number) =>
+      `Free limit of ${max} players reached. Unlock Pro for 17+ players.`,
+    upgradeProShort: 'Get Pro ($10)',
+    proTag: 'Pro'
   },
   preview: {
     editParticipants: 'Edit players',
@@ -194,6 +209,10 @@ export const en = {
     downloadReportPdf: 'Download Report PDF',
     downloadRulesPdf: 'Download Rules PDF',
     print: 'Print',
+    shareCardPng: 'Share WhatsApp Card (PNG)',
+    shareCardReady: 'Summary card PNG downloaded!',
+    shareCardShared: 'Summary card shared!',
+    shareCardError: 'Could not generate the summary image on this browser.',
     finishedBanner: (name: string) => `Tournament completed · ${name}`,
     individualChampion: 'Individual Champion',
     championRecord: (num: number, w: number, d: number, l: number, diff: string) =>
@@ -441,6 +460,69 @@ export const en = {
     currentPinPlaceholder: 'Current PIN',
     close: 'Close',
     removePin: 'Remove PIN'
+  },
+  proModal: {
+    upgradeTitle: 'Domino Tournament Manager Pro',
+    activeTitle: 'Pro License & Club Branding',
+    subtitleFree:
+      'Keep tournaments 100% fair for free up to 16 players, or unlock club hosting tools forever with a one-time $10 key.',
+    subtitlePro: 'Your offline Ed25519 Pro license is verified and active on this device.',
+    closeAria: 'Close Pro modal',
+    gateReasons: {
+      player_limit: (max: number) =>
+        `Your roster would exceed the ${max}-player Free limit. Unlock Pro to host 17+ players in rotating pairs or elimination.`,
+      branding: 'Club name & logo customization on TV projection and PDFs is a Pro feature.',
+      share_card: 'One-click WhatsApp Champion Card PNG export is included in Pro.'
+    },
+    freeHeading: 'Free Forever',
+    freeBadge: '$0',
+    freeFeatures: [
+      'Up to 16 players · 100% offline',
+      'Both fair formats (Fixed Rounds & Knockouts)',
+      'Round clock, visual bracket & live standings',
+      'JSON backup, Organizer PIN & clean rules'
+    ],
+    proHeading: 'Pro Lifetime',
+    proBadge: '$10 one-time',
+    proFeatures: [
+      'Unlimited players (17+ up to 40+ tables)',
+      'Your Club / Event Name + Logo on TV & PDFs',
+      'Clean PDFs with no Free Edition footer',
+      'Shareable WhatsApp Champion Card (PNG)'
+    ],
+    paymentMethodsLabel: 'Accepted launch payment methods:',
+    requestKeyTitle: 'How to get your lifetime key ($10 launch)',
+    requestKeyDesc:
+      'No subscriptions, no login. Send your Club/Organizer Name via email or GitHub/WhatsApp to receive your signed offline key (DTM-PRO-1...).',
+    contactCta: 'Request Pro Key via Email',
+    activateSectionTitle: 'Already have a license key?',
+    keyInputLabel: 'Paste your signed Pro key',
+    keyPlaceholder: 'DTM-PRO-1....',
+    activateButton: 'Activate Pro',
+    activatingButton: 'Verifying...',
+    activationSuccess: (holder: string) => `Pro unlocked! Licensed to ${holder}.`,
+    errors: {
+      empty: 'Paste your Pro license key first.',
+      malformed: 'Invalid key format. It should start with DTM-PRO-1.',
+      unsupported_version: 'This license version is not supported by this app build.',
+      invalid_signature: 'Invalid license signature. Check that the entire key was copied cleanly.',
+      crypto_unavailable: 'Web Crypto Ed25519 verification is unavailable in this browser.'
+    },
+    activeBannerTitle: 'Pro License Active',
+    licensedTo: 'Licensed to:',
+    licenseIdLabel: 'License ID:',
+    issuedAtLabel: 'Issued:',
+    deactivateButton: 'Deactivate key',
+    brandingSectionTitle: 'Club / Event Branding (TV & PDFs)',
+    brandingDesc:
+      'Stored locally on this device only. Appears in TV Projection Mode, clean PDFs, and WhatsApp cards.',
+    clubNameLabel: 'Name',
+    clubNamePlaceholder: 'e.g. Saturday Domino Club',
+    logoLabel: 'Club logo (PNG, JPEG, WebP, SVG · max 250 KB)',
+    chooseLogoButton: 'Upload logo image',
+    removeLogoButton: 'Remove logo',
+    saveBrandingButton: 'Save branding',
+    brandingSavedMessage: 'Club branding saved on this device.'
   }
 };
 

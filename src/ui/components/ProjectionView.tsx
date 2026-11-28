@@ -5,6 +5,7 @@ import type {
   PersistedRound,
   TournamentRecord
 } from '../../application/ports/tournament-repository.js';
+import type { ClubBranding } from '../../infrastructure/club-branding-store.js';
 import { useI18n } from '../../i18n/context.js';
 import { localizeStageName } from '../../i18n/domain-labels.js';
 import { EliminationBracketView } from './EliminationBracketView.js';
@@ -17,6 +18,7 @@ interface ProjectionViewProps {
   onExit: () => void;
   tournament?: TournamentRecord;
   standings?: StandingRow[];
+  clubBranding?: ClubBranding;
 }
 
 export function ProjectionView({
@@ -26,7 +28,8 @@ export function ProjectionView({
   nameOf,
   onExit,
   tournament,
-  standings = []
+  standings = [],
+  clubBranding
 }: ProjectionViewProps) {
   const { locale, t } = useI18n();
   const [nowUtcMs, setNowUtcMs] = useState(() => Date.now());
@@ -79,13 +82,27 @@ export function ProjectionView({
       <div className="mx-auto max-w-7xl space-y-6">
         {/* Top Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold tracking-widest text-emerald-400 uppercase">
-              {tournamentName}
-            </p>
-            <h2 className="text-xl font-bold sm:text-2xl">
-              {localizeStageName(round.stageName, locale)}
-            </h2>
+          <div className="flex items-center gap-3">
+            {clubBranding?.logoDataUrl && (
+              <img
+                src={clubBranding.logoDataUrl}
+                alt={clubBranding.clubName || tournamentName}
+                className="h-12 w-12 shrink-0 rounded-xl border border-white/20 bg-white/10 object-cover"
+              />
+            )}
+            <div>
+              {clubBranding?.clubName && (
+                <p className="text-xs font-extrabold tracking-wider text-amber-300 uppercase">
+                  {clubBranding.clubName}
+                </p>
+              )}
+              <p className="text-xs font-bold tracking-widest text-emerald-400 uppercase">
+                {tournamentName}
+              </p>
+              <h2 className="text-xl font-bold sm:text-2xl">
+                {localizeStageName(round.stageName, locale)}
+              </h2>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

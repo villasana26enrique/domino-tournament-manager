@@ -19,6 +19,7 @@ import type {
   TournamentPlan
 } from '../../core/index.js';
 import type { TournamentRecord } from '../../application/ports/tournament-repository.js';
+import type { ClubBranding } from '../../infrastructure/club-branding-store.js';
 import { downloadRulesPdf } from '../../infrastructure/pdf-exporter.js';
 import { useI18n } from '../../i18n/context.js';
 import {
@@ -31,6 +32,8 @@ interface PreviewScreenProps {
   tournament: TournamentRecord;
   plan: TournamentPlan;
   busy: boolean;
+  isPro: boolean;
+  clubBranding?: ClubBranding;
   onEditParticipants: () => void;
   onUpdateConfig: (patch: Partial<TournamentConfig>, overrideRounds?: number | null) => Promise<void>;
   onRegenerateSeed: () => Promise<void>;
@@ -41,6 +44,8 @@ export function PreviewScreen({
   tournament,
   plan,
   busy,
+  isPro,
+  clubBranding,
   onEditParticipants,
   onUpdateConfig,
   onRegenerateSeed,
@@ -403,7 +408,10 @@ export function PreviewScreen({
               <button
                 type="button"
                 onClick={() =>
-                  downloadRulesPdf(tournament.name, localizedRules, plan.seed, locale)
+                  downloadRulesPdf(tournament.name, localizedRules, plan.seed, locale, {
+                    isPro,
+                    ...(clubBranding ? { clubBranding } : {})
+                  })
                 }
                 className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-stone-50 px-2.5 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100"
               >
