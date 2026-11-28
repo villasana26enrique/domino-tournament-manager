@@ -109,4 +109,50 @@ test.describe('Pro Licensing, Club Branding & Free >16 Gate (E2E)', () => {
     await expect(page.getByText('Club Vecinos')).toBeVisible();
     await page.getByRole('button', { name: 'Exit projection' }).click();
   });
+
+  test('keeps mobile header within viewport, enforces 16px inputs on iPhone widths, and shows updated email', async ({
+    page
+  }) => {
+    for (const width of [375, 390]) {
+      await page.setViewportSize({ width, height: 667 });
+      await page.goto('/');
+
+      // Check zero horizontal overflow in English
+      const enMetrics = await page.evaluate(() => ({
+        docOverflow: document.documentElement.scrollWidth - window.innerWidth,
+        headerOverflow:
+          (document.querySelector('header')?.scrollWidth ?? 0) - window.innerWidth,
+        homeInputFontSize: window.getComputedStyle(
+          document.getElementById('new-tournament-name')!
+        ).fontSize
+      }));
+      expect(enMetrics.docOverflow).toBeLessThanOrEqual(0);
+      expect(enMetrics.headerOverflow).toBeLessThanOrEqual(0);
+      expect(enMetrics.homeInputFontSize).toBe('16px');
+
+      // Switch to Spanish (longer labels like "Hazte Pro ($10)") and re-verify overflow
+      await page.getByRole('button', { name: 'ES', exact: true }).click();
+      const esMetrics = await page.evaluate(() => ({
+        docOverflow: document.documentElement.scrollWidth - window.innerWidth,
+        headerOverflow:
+          (document.querySelector('header')?.scrollWidth ?? 0) - window.innerWidth
+      }));
+      expect(esMetrics.docOverflow).toBeLessThanOrEqual(0);
+      expect(esMetrics.headerOverflow).toBeLessThanOrEqual(0);
+
+      // Verify updated email in Pro modal
+      await page.getByRole('button', { name: /Hazte Pro|Pro/i }).first().click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog.getByText('enrique.villasana26@gmail.com')).toBeVisible();
+      const modalTextareaFontSize = await dialog
+        .locator('textarea')
+        .first()
+        .evaluate((el) => window.getComputedStyle(el).fontSize);
+      expect(modalTextareaFontSize).toBe('16px');
+      await dialog.getByRole('button', { name: /Cerrar ventana Pro/i }).click();
+
+      // Switch back to EN for next iteration
+      await page.getByRole('button', { name: 'EN', exact: true }).click();
+    }
+  });
 });

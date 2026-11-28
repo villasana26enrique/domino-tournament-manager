@@ -7,7 +7,7 @@ export const PRO_LAUNCH_PRICE_USD = 10;
  */
 export const PRO_PURCHASE_CONFIG = {
   priceUsd: PRO_LAUNCH_PRICE_USD,
-  contactEmail: 'villasana26enrique@gmail.com',
+  contactEmail: 'enrique.villasana26@gmail.com',
   githubContactUrl: 'https://github.com/villasana26enrique/domino-tournament-manager/issues',
   // Optional: fill in your WhatsApp link (e.g. 'https://wa.me/58...') or USDC wallet address when ready.
   whatsappUrl: '',

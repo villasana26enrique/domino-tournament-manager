@@ -17,7 +17,21 @@ export async function registerPwaServiceWorker(
   }
 
   try {
-    await navigator.serviceWorker.register('./sw.js', { scope: './' });
+    const sw = navigator.serviceWorker;
+    const hadController = Boolean(sw.controller);
+    if (
+      hadController &&
+      typeof window !== 'undefined' &&
+      typeof sw.addEventListener === 'function'
+    ) {
+      let reloaded = false;
+      sw.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+    }
+    await sw.register('./sw.js', { scope: './' });
     return true;
   } catch {
     return false;

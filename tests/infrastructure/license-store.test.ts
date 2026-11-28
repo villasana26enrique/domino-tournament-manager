@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { PRO_PURCHASE_CONFIG } from '../../src/infrastructure/commercial-config.js';
 import {
   PRO_LICENSE_STORAGE_KEY,
   createLicenseStore,
@@ -184,5 +185,9 @@ describe('Offline Ed25519 Pro License Verification (TDD)', () => {
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
+  });
+
+  it('uses the verified contact email in commercial purchase config', () => {
+    expect(PRO_PURCHASE_CONFIG.contactEmail).toBe('enrique.villasana26@gmail.com');
   });
 });
