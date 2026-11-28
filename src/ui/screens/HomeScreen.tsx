@@ -17,6 +17,7 @@ interface HomeScreenProps {
   tournaments: TournamentRecord[];
   busy: boolean;
   isPro: boolean;
+  showProCard?: boolean;
   onCreateTournament: (name: string) => Promise<void>;
   onOpenTournament: (tournament: TournamentRecord) => void;
   onRequestDeleteTournament: (tournament: TournamentRecord) => void;
@@ -37,6 +38,7 @@ export function HomeScreen({
   tournaments,
   busy,
   isPro,
+  showProCard = true,
   onCreateTournament,
   onOpenTournament,
   onRequestDeleteTournament,
@@ -269,35 +271,37 @@ export function HomeScreen({
             <p className="mt-1 leading-relaxed">{t.home.sidebarTimeRuleDesc}</p>
           </div>
 
-          <div
-            className={`rounded-2xl border p-5 shadow-xs ${
-              isPro
-                ? 'border-emerald-200 bg-emerald-50/70'
-                : 'border-amber-200 bg-amber-50/60'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <Crown className={`h-5 w-5 ${isPro ? 'text-emerald-700' : 'text-amber-600'}`} />
-              <h2 className="text-sm font-semibold text-stone-900">
-                {isPro ? t.home.sidebarBrandingTitle : t.home.sidebarProTitle}
-              </h2>
-            </div>
-            <p className="mt-1.5 text-xs leading-relaxed text-stone-600">
-              {isPro ? t.home.sidebarBrandingDesc : t.home.sidebarProDesc}
-            </p>
-            <button
-              type="button"
-              onClick={() => onOpenProModal()}
-              className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+          {showProCard && (
+            <div
+              className={`rounded-2xl border p-5 shadow-xs ${
                 isPro
-                  ? 'border border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100/60'
-                  : 'bg-amber-400 text-stone-950 hover:bg-amber-300'
+                  ? 'border-emerald-200 bg-emerald-50/70'
+                  : 'border-amber-200 bg-amber-50/60'
               }`}
             >
-              <Crown className="h-3.5 w-3.5" />
-              {isPro ? t.home.sidebarBrandingButton : t.home.sidebarProButton}
-            </button>
-          </div>
+              <div className="flex items-center gap-2.5">
+                <Crown className={`h-5 w-5 ${isPro ? 'text-emerald-700' : 'text-amber-600'}`} />
+                <h2 className="text-sm font-semibold text-stone-900">
+                  {isPro ? t.home.sidebarBrandingTitle : t.home.sidebarProTitle}
+                </h2>
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-stone-600">
+                {isPro ? t.home.sidebarBrandingDesc : t.home.sidebarProDesc}
+              </p>
+              <button
+                type="button"
+                onClick={() => onOpenProModal()}
+                className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                  isPro
+                    ? 'border border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100/60'
+                    : 'bg-amber-400 text-stone-950 hover:bg-amber-300'
+                }`}
+              >
+                <Crown className="h-3.5 w-3.5" />
+                {isPro ? t.home.sidebarBrandingButton : t.home.sidebarProButton}
+              </button>
+            </div>
+          )}
         </aside>
       </div>
     </div>

@@ -21,7 +21,10 @@ import {
   createClubBrandingStore,
   type ClubBranding
 } from '../infrastructure/club-branding-store.js';
-import { FREE_MAX_PLAYERS } from '../infrastructure/commercial-config.js';
+import {
+  FREE_MAX_PLAYERS,
+  PRO_MONETIZATION_ENABLED
+} from '../infrastructure/commercial-config.js';
 import {
   createLicenseStore,
   type LicenseState
@@ -54,15 +57,23 @@ export interface AppProps {
   runtimeLabel: string;
   initialLocale?: Locale;
   licensePublicKey?: string;
+  monetizationEnabled?: boolean;
 }
 
-export function App({ service, runtimeLabel, initialLocale, licensePublicKey }: AppProps) {
+export function App({
+  service,
+  runtimeLabel,
+  initialLocale,
+  licensePublicKey,
+  monetizationEnabled
+}: AppProps) {
   return (
     <I18nProvider {...(initialLocale ? { initialLocale } : {})}>
       <AppContent
         service={service}
         runtimeLabel={runtimeLabel}
         {...(licensePublicKey ? { licensePublicKey } : {})}
+        {...(monetizationEnabled !== undefined ? { monetizationEnabled } : {})}
       />
     </I18nProvider>
   );
@@ -71,11 +82,13 @@ export function App({ service, runtimeLabel, initialLocale, licensePublicKey }: 
 function AppContent({
   service,
   runtimeLabel,
-  licensePublicKey
+  licensePublicKey,
+  monetizationEnabled
 }: {
   service: TournamentService;
   runtimeLabel: string;
   licensePublicKey?: string;
+  monetizationEnabled?: boolean;
 }) {
   const { locale, setLocale, t } = useI18n();
   const { canInstall, promptInstall } = usePwaInstall();
@@ -96,10 +109,13 @@ function AppContent({
   const [clubBranding, setClubBranding] = useState<ClubBranding>(() => brandingStore.load());
   const [proModalState, setProModalState] = useState<{ reason?: ProModalGateReason } | null>(null);
 
-  const isPro = licenseState.tier === 'pro';
-  const effectiveBranding = isPro ? clubBranding : undefined;
+  const monetizationActive = monetizationEnabled ?? PRO_MONETIZATION_ENABLED;
+  const hasProAccess = !monetizationActive || licenseState.tier === 'pro';
+  const effectiveBranding =
+    monetizationActive && hasProAccess ? clubBranding : undefined;
 
   useEffect(() => {
+    if (!monetizationActive) return;
     let active = true;
     void licenseStore.loadVerifiedLicense().then((state) => {
       if (active) setLicenseState(state);
@@ -107,11 +123,15 @@ function AppContent({
     return () => {
       active = false;
     };
-  }, [licenseStore]);
+  }, [licenseStore, monetizationActive]);
 
-  const openProModal = useCallback((reason?: ProModalGateReason) => {
-    setProModalState(reason ? { reason } : {});
-  }, []);
+  const openProModal = useCallback(
+    (reason?: ProModalGateReason) => {
+      if (!monetizationActive) return;
+      setProModalState(reason ? { reason } : {});
+    },
+    [monetizationActive]
+  );
 
   const organizerPinStore = useMemo(() => createOrganizerPinStore(), []);
   const [hasOrganizerPin, setHasOrganizerPin] = useState(() => organizerPinStore.hasPin());
@@ -238,7 +258,7 @@ function AppContent({
 
   async function handleAddParticipant(name: string) {
     if (!current) return;
-    if (!isPro && current.participants.length >= FREE_MAX_PLAYERS) {
+    if (!hasProAccess && current.participants.length >= FREE_MAX_PLAYERS) {
       openProModal('player_limit');
       return;
     }
@@ -255,7 +275,7 @@ function AppContent({
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter((line) => line.length > 0).length;
-    if (!isPro && current.participants.length + incomingCount > FREE_MAX_PLAYERS) {
+    if (!hasProAccess && current.participants.length + incomingCount > FREE_MAX_PLAYERS) {
       openProModal('player_limit');
       return;
     }
@@ -528,20 +548,24 @@ function AppContent({
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={() => openProModal()}
-              aria-label={isPro ? t.app.proActive : t.app.getPro}
-              className={`inline-flex items-center gap-1 rounded-xl px-2 py-1.5 text-xs font-bold transition sm:gap-1.5 sm:px-3 ${
-                isPro
-                  ? 'border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
-                  : 'bg-amber-400 text-stone-950 hover:bg-amber-300'
-              }`}
-            >
-              <Crown className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">{isPro ? t.app.proActive : t.app.getPro}</span>
-              <span className="sm:hidden">{t.app.proActive}</span>
-            </button>
+            {monetizationActive && (
+              <button
+                type="button"
+                onClick={() => openProModal()}
+                aria-label={hasProAccess ? t.app.proActive : t.app.getPro}
+                className={`inline-flex items-center gap-1 rounded-xl px-2 py-1.5 text-xs font-bold transition sm:gap-1.5 sm:px-3 ${
+                  hasProAccess
+                    ? 'border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+                    : 'bg-amber-400 text-stone-950 hover:bg-amber-300'
+                }`}
+              >
+                <Crown className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">
+                  {hasProAccess ? t.app.proActive : t.app.getPro}
+                </span>
+                <span className="sm:hidden">{t.app.proActive}</span>
+              </button>
+            )}
 
             <div
               role="group"
@@ -594,7 +618,8 @@ function AppContent({
           <HomeScreen
             tournaments={tournaments}
             busy={busy}
-            isPro={isPro}
+            isPro={hasProAccess}
+            showProCard={monetizationActive}
             onCreateTournament={handleCreateTournament}
             onOpenTournament={handleOpenTournament}
             onRequestDeleteTournament={(item) =>
@@ -613,7 +638,7 @@ function AppContent({
           <RegistrationScreen
             tournament={current}
             busy={busy}
-            isPro={isPro}
+            isPro={hasProAccess}
             onBackHome={() => setScreen('home')}
             onAddParticipant={handleAddParticipant}
             onAddBulk={handleAddBulk}
@@ -629,7 +654,7 @@ function AppContent({
             tournament={current}
             plan={previewPlan}
             busy={busy}
-            isPro={isPro}
+            isPro={hasProAccess}
             {...(effectiveBranding ? { clubBranding: effectiveBranding } : {})}
             onEditParticipants={() => setScreen('register')}
             onUpdateConfig={handleUpdateConfig}
@@ -643,7 +668,7 @@ function AppContent({
             tournament={current}
             standings={liveStandings}
             busy={busy}
-            isPro={isPro}
+            isPro={hasProAccess}
             {...(effectiveBranding ? { clubBranding: effectiveBranding } : {})}
             organizerLocked={organizerLocked}
             onRequireOrganizerAction={requireOrganizerAction}
@@ -664,7 +689,7 @@ function AppContent({
           <CompletedTournamentScreen
             tournament={current}
             standings={liveStandings}
-            isPro={isPro}
+            isPro={hasProAccess}
             {...(effectiveBranding ? { clubBranding: effectiveBranding } : {})}
             onBackHome={() => setScreen('home')}
             onOpenProModal={(reason) => openProModal(reason)}
@@ -734,9 +759,9 @@ function AppContent({
           }}
         />
       )}
-      {proModalState && (
+      {monetizationActive && proModalState && (
         <ProLicenseModal
-          isPro={isPro}
+          isPro={licenseState.tier === 'pro'}
           license={licenseState.license}
           clubBranding={clubBranding}
           {...(proModalState.reason ? { reason: proModalState.reason } : {})}

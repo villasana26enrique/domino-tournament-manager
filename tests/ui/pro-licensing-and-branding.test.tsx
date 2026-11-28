@@ -68,6 +68,7 @@ describe('Pro Licensing, Free >16 Gate, Club Branding & WhatsApp Card UI (TDD)',
         runtimeLabel="Local browser storage"
         initialLocale="en"
         licensePublicKey={kp.publicKeyB64Url}
+        monetizationEnabled={true}
       />
     );
 
@@ -163,6 +164,7 @@ describe('Pro Licensing, Free >16 Gate, Club Branding & WhatsApp Card UI (TDD)',
         runtimeLabel="Local browser storage"
         initialLocale="en"
         licensePublicKey={kp.publicKeyB64Url}
+        monetizationEnabled={true}
       />
     );
 
@@ -181,5 +183,41 @@ describe('Pro Licensing, Free >16 Gate, Club Branding & WhatsApp Card UI (TDD)',
 
     await user.click(within(dialog).getByRole('button', { name: /Deactivate key/i }));
     expect(await within(dialog).findByLabelText(/Paste your signed Pro key/i)).toBeInTheDocument();
+  });
+
+  it('hides Pro UI and allows 25+ players & WhatsApp PNG card freely when monetization is disabled by default', async () => {
+    const user = userEvent.setup();
+    const service = createTestService('open-mode');
+    const shareSpy = vi.spyOn(shareCardExporter, 'shareChampionCard').mockResolvedValue('downloaded');
+
+    const trn = await service.createDraft('Open Completed Cup');
+    await service.addParticipantsBulk(trn.id, 'A\nB\nC\nD');
+    await service.updateConfig(trn.id, { format: 'rounds_all_play' }, 1);
+    await service.confirmAndStartTournament(trn.id);
+    await service.simulateCurrentRoundResults(trn.id);
+    await service.completeRoundAndAdvance(trn.id);
+
+    const view = render(
+      <App service={service} runtimeLabel="Local browser storage" initialLocale="en" />
+    );
+
+    expect(await view.findByText('Open Completed Cup')).toBeInTheDocument();
+    expect(view.queryByRole('button', { name: /Get Pro|Unlock Pro/i })).not.toBeInTheDocument();
+
+    // Completed tournament Share WhatsApp Card runs freely with no Pro modal
+    await user.click(view.getByRole('button', { name: /View summary/i }));
+    await user.click(await view.findByRole('button', { name: /Share WhatsApp Card \(PNG\)/i }));
+    expect(view.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(shareSpy).toHaveBeenCalledTimes(1);
+
+    // Home -> create tournament -> 25 players loads freely with no Pro gate
+    await user.click(view.getByRole('button', { name: /Back to home/i }));
+    await user.type(view.getByLabelText(/Tournament name/i), 'Vecinos 25 Libres');
+    await user.click(view.getByRole('button', { name: /Create tournament/i }));
+    expect(view.queryByText(/Free tier:/i)).not.toBeInTheDocument();
+
+    await user.click(await view.findByRole('button', { name: /^25 players$/i }));
+    expect(view.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await view.findByText(/25 players registered/i)).toBeInTheDocument();
   });
 });

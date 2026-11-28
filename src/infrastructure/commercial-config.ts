@@ -1,3 +1,10 @@
+/**
+ * Global kill-switch for Pro gating & upgrade UI.
+ * Keep false while running 100% open (no player limits, no paywalls) until automated checkout is ready.
+ * Set back to true to re-enable Pro licensing, 16-player Free limit, and Club Branding modal.
+ */
+export const PRO_MONETIZATION_ENABLED = false;
+
 export const FREE_MAX_PLAYERS = 16;
 export const PRO_LAUNCH_PRICE_USD = 10;
 
