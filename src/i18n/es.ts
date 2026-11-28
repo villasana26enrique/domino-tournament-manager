@@ -12,7 +12,8 @@ export const es: Translations = {
     pinProtect: 'Proteger con PIN',
     pinShort: 'PIN',
     pinLocked: 'Bloqueado',
-    pinUnlocked: 'Organizador'
+    pinUnlocked: 'Organizador',
+    installApp: 'Instalar app'
   },
   home: {
     badge: 'Offline-first · Parejas rotativas · Justo y explicable',

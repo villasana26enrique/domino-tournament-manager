@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, BookOpen, Database, Home, KeyRound, Lock, Unlock, X } from 'lucide-react';
+import {
+  AlertCircle,
+  BookOpen,
+  Database,
+  Download,
+  Home,
+  KeyRound,
+  Lock,
+  Unlock,
+  X
+} from 'lucide-react';
 import type { MatchEndReason, TournamentConfig, TournamentPlan } from '../core/index.js';
 import type { TournamentRecord } from '../application/ports/tournament-repository.js';
 import type { TournamentService } from '../application/tournament-service.js';
@@ -7,6 +17,7 @@ import { I18nProvider, useI18n } from '../i18n/context.js';
 import { localizeRuntimeLabel } from '../i18n/domain-labels.js';
 import type { Locale } from '../i18n/locale.js';
 import { createOrganizerPinStore } from '../infrastructure/organizer-pin.js';
+import { usePwaInstall } from './hooks/usePwaInstall.js';
 import { BackupModal } from './components/BackupModal.js';
 import { DeleteTournamentModal } from './components/DeleteTournamentModal.js';
 import { DominoLogo } from './components/DominoLogo.js';
@@ -46,6 +57,7 @@ function AppContent({
   runtimeLabel: string;
 }) {
   const { locale, setLocale, t } = useI18n();
+  const { canInstall, promptInstall } = usePwaInstall();
   const [screen, setScreen] = useState<Screen>('home');
   const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [current, setCurrent] = useState<TournamentRecord | null>(null);
@@ -387,6 +399,16 @@ function AppContent({
               <Database className="h-3 w-3 text-emerald-700" />
               {localizeRuntimeLabel(runtimeLabel, locale)}
             </span>
+            {canInstall && (
+              <button
+                type="button"
+                onClick={() => void promptInstall()}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-100 sm:px-3"
+              >
+                <Download className="h-3.5 w-3.5 text-emerald-700" />
+                <span className="hidden md:inline">{t.app.installApp}</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => navigateWithGuard('home')}

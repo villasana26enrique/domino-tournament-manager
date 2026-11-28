@@ -120,3 +120,13 @@ Este documento registra las decisiones arquitectónicas (ADR), matemáticas y de
   2. **Detección y persistencia (`detectInitialLocale`):** Respeta primero la preferencia guardada en `localStorage` (`domino_tm_locale_v1`), luego detecta idiomas `es` / `es-*` de `navigator.languages`, y usa **inglés (`en`)** como idioma predeterminado principal.
   3. **Reglas y PDFs bilingües:** `generateTournamentRules` (`CoreLocale = 'en' | 'es'`), `localizeRulesDocument`, `localizeStageName` y `pdf-exporter.ts` generan reglamento oficial, fases, tablas y reportes PDF íntegramente en inglés o español según el idioma activo.
   4. **Limpieza web:** `index.html` actualizado a `lang="en"` con metadatos SEO en inglés y reemplazo de `"Vista previa"` por almacenamiento local del dispositivo.
+
+## ADR-015 — PWA instalable 100% offline, Wake Lock web y metadatos SEO / Open Graph
+
+- **Estado:** Aprobado (Pre-comercialización — PR #4)
+- **Decisión:**
+  1. **PWA instalable (`vite-plugin-pwa` + `pwa-register.ts`):** `manifest.webmanifest`, Service Worker Workbox (`generateSW`) precacheando todo `dist/` para carga 100% offline (`navigateFallback: 'index.html'`), e iconos PNG reales (`192x192`, `512x512` `any maskable`, `180x180` Apple Touch Icon) + `favicon.svg`. El registro de SW se omite automáticamente dentro del runtime Tauri.
+  2. **Wake Lock en navegador (`power-manager.ts`):** Además de `SetThreadExecutionState` en Tauri Windows, en la versión web/PWA usa la Screen Wake Lock API (`navigator.wakeLock.request('screen')`) con re-adquisición automática en `visibilitychange` mientras el cronómetro o el Modo Proyección estén activos.
+  3. **Botón de instalación (`usePwaInstall`):** Escucha `beforeinstallprompt` y muestra `Install app` / `Instalar app` en la cabecera solo cuando el navegador permite instalarla.
+  4. **SEO y vista previa social (`index.html`, `og-card.png`, `robots.txt`, `sitemap.xml`):** Metadatos Open Graph (`1200x630`), Twitter Card y esquema JSON-LD `SoftwareApplication` en inglés como idioma canónico.
+  5. **Limpieza:** Retirada la dependencia no utilizada `zustand`.

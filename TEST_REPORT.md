@@ -4,6 +4,22 @@ Este archivo conserva evidencia real y reproducible de cada comando de verificac
 
 ---
 
+## PWA 100% Offline, Wake Lock Web, SEO/Open Graph y Limpieza (ADR-015 — TDD estricto)
+
+- **Fecha de ejecución:** 2026-11-27
+- **Rama / PR:** `feature/pwa-offline-seo` → `main`
+- **Ciclo TDD (`tests/infrastructure/power-and-pwa.test.ts`):**
+  - **Rojo:** Falló al importar `src/infrastructure/pwa-register.ts` antes de crear el módulo.
+  - **Verde:** Tras implementar Screen Wake Lock web en `power-manager.ts` y registro seguro de Service Worker en `pwa-register.ts` (omitido en Tauri), pasaron **3/3 pruebas**.
+- **Verificación completa tras la última edición de código y pruebas:**
+  - `npm run typecheck`: **APROBADO** (`exit code 0`, `0` errores).
+  - `npm test`: **19/19 archivos, 97/97 pruebas aprobadas** en `3.82s`.
+  - `npm run build`: **APROBADO** (`vite build` en `1.62s` + `PWA v2.0.0` `generateSW`: `20` entradas precacheadas, `1672.25 KiB`, `dist/sw.js` y `dist/manifest.webmanifest`).
+  - `npm run test:e2e`: **10/10 pruebas Playwright aprobadas** (`5.8s`, 5 en desktop `1280x800` + 5 en móvil `390x844`), validando HTTP 200 en manifest/SW/iconos/`og-card.png`/`robots.txt`/`sitemap.xml`, etiquetas SEO/JSON-LD y **recarga + creación de torneo con `context.setOffline(true)`**.
+  - `npm run simulate:matrix -- --seeds 1,2`: **42 ejecuciones** (`0..41`) con **`Total de violaciones de restricciones: 0`**.
+
+---
+
 ## Bilingüe `EN` (principal) + `ES` con autodetección (ADR-014 — TDD estricto)
 
 - **Fecha de ejecución:** 2026-11-27
