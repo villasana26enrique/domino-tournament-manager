@@ -141,3 +141,11 @@ Este documento registra las decisiones arquitectónicas (ADR), matemáticas y de
      - **Free (\$0):** ambas modalidades (`rounds_all_play` y `qualifying_elimination`), hasta **16 jugadores**, cronómetro, llave visual, tabla de posiciones, respaldo JSON, PIN de organizador y PDFs con pie sutil `Free Edition`.
      - **Pro (\$10 pago único):** **17+ jugadores**, **Branding local del club** (nombre + logo en `ProjectionView` y PDFs sin pie gratuito) y **Tarjeta PNG resumen del campeón** para compartir por WhatsApp (`share-card-exporter.ts`).
   3. **Documentación operativa:** Guía paso a paso en `LICENSING.md` para emitir claves, instalarlas offline en cualquier equipo y respaldar la clave privada.
+
+## ADR-017 — Cierre Fase 6: Íconos Tauri Windows, Workflow NSIS `.exe`, Manual de 1 Página y SEO Search Console
+
+- **Estado:** Aprobado (Cierre Fase 6 — PR #8)
+- **Decisión:**
+  1. **Activos desktop Tauri (`src-tauri/icons/` + `tauri.conf.json`):** Generación del paquete oficial de íconos (`icon.ico`, `icon.icns`, PNGs) a partir de `public/icons/icon-512.png`, desbloqueando la compilación y pruebas Rust/SQLite (`cargo test`) en el job `windows-latest` de GitHub Actions.
+  2. **Automatización de instalador Windows `.exe` (`.github/workflows/build-windows.yml`):** Workflow dedicado en `windows-latest` bajo demanda (`workflow_dispatch`) o tag `v*` que valida TypeScript, Vitest y Rust/SQLite antes de empaquetar el instalador NSIS (`npm run tauri:build`), subir el `.exe` como artefacto y adjuntarlo a GitHub Releases en tags.
+  3. **Cierre documental y SEO (`MANUAL_ORGANIZADOR.md`, `README.md`, `docs/GOOGLE_INDEXING.md`, `index.html`, `public/sitemap.xml`):** Manual rápido imprimible de 1 página, guía de alta en Google Search Console, metadatos `robots`/`keywords`/`lastmod` y actualización integral del `README.md` manteniendo la monetización pausada por defecto (`PRO_MONETIZATION_ENABLED = false`).
