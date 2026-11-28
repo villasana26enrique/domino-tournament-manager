@@ -10,7 +10,8 @@ export const en = {
     pinProtect: 'Protect with PIN',
     pinShort: 'PIN',
     pinLocked: 'Locked',
-    pinUnlocked: 'Organizer'
+    pinUnlocked: 'Organizer',
+    installApp: 'Install app'
   },
   home: {
     badge: 'Offline-first · Rotating Pairs · Fair & Auditable',
