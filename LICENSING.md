@@ -1,5 +1,7 @@
 # Guía de Licencias Pro Offline (`LICENSING.md`)
 
+> **Estado actual:** La monetización Pro está **pausada temporalmente** mediante el interruptor `PRO_MONETIZATION_ENABLED = false` en `src/infrastructure/commercial-config.ts`. Todos los usuarios pueden registrar jugadores sin límite y usar la tarjeta PNG de WhatsApp sin bloqueos. Cuando tengas un flujo automático de cobro, cambia ese valor a `true` para reactivar el sistema Pro al instante.
+
 Esta guía explica cómo generar claves Pro firmadas con **Ed25519** desde tu Mac para usar **Domino Tournament Manager Pro** gratis en tus propios torneos con los vecinos, o para entregar claves de por vida a tus compradores (\$10 lanzamiento).
 
 ---

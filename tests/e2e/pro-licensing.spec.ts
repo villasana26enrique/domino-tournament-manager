@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
+import { PRO_MONETIZATION_ENABLED } from '../../src/infrastructure/commercial-config.js';
 
 const localPrivateKeyPath = path.resolve('.keys/ed25519-private.pem');
 const hasLocalPrivateKey = fs.existsSync(localPrivateKeyPath);
@@ -18,6 +19,7 @@ test.describe('Pro Licensing, Club Branding & Free >16 Gate (E2E)', () => {
   test('enforces 16-player Free limit cleanly, rejects forged keys, and gates Share PNG Card', async ({
     page
   }) => {
+    test.skip(!PRO_MONETIZATION_ENABLED, 'Pro monetization disabled by feature flag');
     await page.getByPlaceholder('e.g. Saturday Club Cup').fill('Free Limit E2E');
     await page.getByRole('button', { name: 'Create tournament' }).click();
 
@@ -70,7 +72,10 @@ test.describe('Pro Licensing, Club Branding & Free >16 Gate (E2E)', () => {
   test('activates real signed Ed25519 key across reload, unlocks 20 players, and renders Club Branding on TV', async ({
     page
   }) => {
-    test.skip(!hasLocalPrivateKey, 'Requires local .keys/ed25519-private.pem to mint a real signature');
+    test.skip(
+      !PRO_MONETIZATION_ENABLED || !hasLocalPrivateKey,
+      'Requires PRO_MONETIZATION_ENABLED=true and local .keys/ed25519-private.pem'
+    );
 
     const realKey = execFileSync(
       process.execPath,
@@ -130,7 +135,7 @@ test.describe('Pro Licensing, Club Branding & Free >16 Gate (E2E)', () => {
       expect(enMetrics.headerOverflow).toBeLessThanOrEqual(0);
       expect(enMetrics.homeInputFontSize).toBe('16px');
 
-      // Switch to Spanish (longer labels like "Hazte Pro ($10)") and re-verify overflow
+      // Switch to Spanish (longer labels) and re-verify overflow
       await page.getByRole('button', { name: 'ES', exact: true }).click();
       const esMetrics = await page.evaluate(() => ({
         docOverflow: document.documentElement.scrollWidth - window.innerWidth,
@@ -140,19 +145,31 @@ test.describe('Pro Licensing, Club Branding & Free >16 Gate (E2E)', () => {
       expect(esMetrics.docOverflow).toBeLessThanOrEqual(0);
       expect(esMetrics.headerOverflow).toBeLessThanOrEqual(0);
 
-      // Verify updated email in Pro modal
-      await page.getByRole('button', { name: /Hazte Pro|Pro/i }).first().click();
-      const dialog = page.getByRole('dialog');
-      await expect(dialog.getByText('enrique.villasana26@gmail.com')).toBeVisible();
-      const modalTextareaFontSize = await dialog
-        .locator('textarea')
-        .first()
-        .evaluate((el) => window.getComputedStyle(el).fontSize);
-      expect(modalTextareaFontSize).toBe('16px');
-      await dialog.getByRole('button', { name: /Cerrar ventana Pro/i }).click();
+      if (PRO_MONETIZATION_ENABLED) {
+        await page.getByRole('button', { name: /Hazte Pro|Pro/i }).first().click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog.getByText('enrique.villasana26@gmail.com')).toBeVisible();
+        const modalTextareaFontSize = await dialog
+          .locator('textarea')
+          .first()
+          .evaluate((el) => window.getComputedStyle(el).fontSize);
+        expect(modalTextareaFontSize).toBe('16px');
+        await dialog.getByRole('button', { name: /Cerrar ventana Pro/i }).click();
+      } else {
+        await expect(page.getByRole('button', { name: /Hazte Pro|Get Pro/i })).toHaveCount(0);
+      }
 
       // Switch back to EN for next iteration
       await page.getByRole('button', { name: 'EN', exact: true }).click();
+    }
+
+    if (!PRO_MONETIZATION_ENABLED) {
+      // Open-registration verification: 25+ players allowed freely without Pro modal
+      await page.getByPlaceholder('e.g. Saturday Club Cup').fill('Open 25 Players');
+      await page.getByRole('button', { name: 'Create tournament' }).click();
+      await page.getByRole('button', { name: '25 players' }).click();
+      await expect(page.getByText('25 players registered')).toBeVisible();
+      await expect(page.getByRole('dialog')).toHaveCount(0);
     }
   });
 });
