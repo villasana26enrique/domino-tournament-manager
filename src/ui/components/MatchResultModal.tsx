@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { validateMatchScore, type MatchEndReason } from '../../core/index.js';
 import type { PersistedMatch } from '../../application/ports/tournament-repository.js';
+import { useI18n } from '../../i18n/context.js';
+import { localizeScoreMessages } from '../../i18n/domain-labels.js';
 
 interface MatchResultModalProps {
   match: PersistedMatch;
@@ -26,6 +28,7 @@ export function MatchResultModal({
   onClose,
   onSubmit
 }: MatchResultModalProps) {
+  const { locale, t } = useI18n();
   const isCorrection = match.status === 'completed';
 
   const [pairAStr, setPairAStr] = useState(
@@ -53,22 +56,27 @@ export function MatchResultModal({
       })
     : null;
 
+  const localizedErrors = liveValidation ? localizeScoreMessages(liveValidation.errors, locale) : [];
+  const localizedWarnings = liveValidation
+    ? localizeScoreMessages(liveValidation.warnings, locale)
+    : [];
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLocalError(null);
 
     if (!hasBothNumbers) {
-      setLocalError('Ingresa los puntajes numéricos de ambas parejas.');
+      setLocalError(t.matchModal.missingNumbersError);
       return;
     }
 
     if (liveValidation && !liveValidation.valid) {
-      setLocalError(liveValidation.errors.join(' '));
+      setLocalError(localizedErrors.join(' '));
       return;
     }
 
     if (isCorrection && reason.trim().length === 0) {
-      setLocalError('Debes escribir el motivo de la corrección administrativa.');
+      setLocalError(t.matchModal.missingCorrectionReasonError);
       return;
     }
 
@@ -93,17 +101,15 @@ export function MatchResultModal({
           <div>
             <h2 id="match-modal-title" className="text-lg font-bold text-stone-900">
               {isCorrection
-                ? `Corregir resultado — Mesa ${match.tableNumber}`
-                : `Registrar resultado — Mesa ${match.tableNumber}`}
+                ? t.matchModal.correctTitle(match.tableNumber)
+                : t.matchModal.recordTitle(match.tableNumber)}
             </h2>
-            <p className="text-xs text-stone-500">
-              Meta: {targetScore} pts · Se registran puntos reales sin recorte
-            </p>
+            <p className="text-xs text-stone-500">{t.matchModal.subtitle(targetScore)}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Cerrar ventana"
+            aria-label={t.matchModal.closeAria}
             className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
           >
             <X className="h-5 w-5" />
@@ -114,14 +120,14 @@ export function MatchResultModal({
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Pair A */}
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
-              <p className="text-xs font-bold text-emerald-900 uppercase">Pareja A</p>
+              <p className="text-xs font-bold text-emerald-900 uppercase">{t.matchModal.pairA}</p>
               <p className="mt-1 text-xs text-stone-700">{nameOf(match.pairA[0])}</p>
               <p className="text-xs text-stone-700">{nameOf(match.pairA[1])}</p>
               <label
                 htmlFor="score-pair-a"
                 className="mt-3 block text-xs font-semibold text-stone-700"
               >
-                Puntos Pareja A
+                {t.matchModal.scorePairA}
               </label>
               <input
                 id="score-pair-a"
@@ -130,21 +136,21 @@ export function MatchResultModal({
                 step={1}
                 value={pairAStr}
                 onChange={(e) => setPairAStr(e.target.value)}
-                placeholder="Ej. 114"
+                placeholder="114"
                 className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-lg font-bold text-stone-900 focus:border-emerald-700 focus:outline-none"
               />
             </div>
 
             {/* Pair B */}
             <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-              <p className="text-xs font-bold text-stone-700 uppercase">Pareja B</p>
+              <p className="text-xs font-bold text-stone-700 uppercase">{t.matchModal.pairB}</p>
               <p className="mt-1 text-xs text-stone-700">{nameOf(match.pairB[0])}</p>
               <p className="text-xs text-stone-700">{nameOf(match.pairB[1])}</p>
               <label
                 htmlFor="score-pair-b"
                 className="mt-3 block text-xs font-semibold text-stone-700"
               >
-                Puntos Pareja B
+                {t.matchModal.scorePairB}
               </label>
               <input
                 id="score-pair-b"
@@ -153,33 +159,33 @@ export function MatchResultModal({
                 step={1}
                 value={pairBStr}
                 onChange={(e) => setPairBStr(e.target.value)}
-                placeholder="Ej. 82"
+                placeholder="82"
                 className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-lg font-bold text-stone-900 focus:border-emerald-700 focus:outline-none"
               />
             </div>
           </div>
 
           <label className="block space-y-1 text-xs font-semibold text-stone-700">
-            <span>Motivo de cierre</span>
+            <span>{t.matchModal.endReasonLabel}</span>
             <select
               value={endedBy}
               onChange={(e) => setEndedBy(e.target.value as MatchEndReason)}
               className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-normal text-stone-900"
             >
-              <option value="target_score">Alcanzó o superó la meta ({targetScore} pts)</option>
-              <option value="time_expired">Se agotó el tiempo (terminó mano en curso)</option>
-              {isCorrection && <option value="admin_override">Corrección administrativa</option>}
+              <option value="target_score">{t.matchModal.endReasonTarget(targetScore)}</option>
+              <option value="time_expired">{t.matchModal.endReasonTime}</option>
+              {isCorrection && <option value="admin_override">{t.matchModal.endReasonAdmin}</option>}
             </select>
           </label>
 
           {isCorrection && (
             <label className="block space-y-1 text-xs font-semibold text-stone-700">
-              <span>Motivo de corrección (queda en auditoría)</span>
+              <span>{t.matchModal.correctionReasonLabel}</span>
               <input
                 type="text"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Ej. Error al transcribir hoja de Mesa 1"
+                placeholder={t.matchModal.correctionReasonPlaceholder}
                 className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm font-normal text-stone-900 focus:border-emerald-700 focus:outline-none"
               />
             </label>
@@ -191,15 +197,15 @@ export function MatchResultModal({
               <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
               <span>
                 {liveValidation.outcome === 'draw'
-                  ? `Resultado válido: Empate por tiempo (${parsedA} - ${parsedB}), sin ganador ni perdedor.`
-                  : `Gana Pareja ${liveValidation.winnerPair} (${parsedA} - ${parsedB}).`}
+                  ? t.matchModal.validDrawFeedback(parsedA, parsedB)
+                  : t.matchModal.validWinFeedback(liveValidation.winnerPair ?? 'A', parsedA, parsedB)}
               </span>
             </div>
           )}
 
-          {liveValidation && liveValidation.warnings.length > 0 && (
+          {localizedWarnings.length > 0 && (
             <div className="space-y-1 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-900">
-              {liveValidation.warnings.map((w) => (
+              {localizedWarnings.map((w) => (
                 <p key={w} className="flex items-start gap-2">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
                   <span>{w}</span>
@@ -210,7 +216,7 @@ export function MatchResultModal({
 
           {(localError || (liveValidation && !liveValidation.valid)) && (
             <div className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-medium text-rose-800">
-              {localError ?? liveValidation?.errors.join(' ')}
+              {localError ?? localizedErrors.join(' ')}
             </div>
           )}
 
@@ -220,14 +226,14 @@ export function MatchResultModal({
               onClick={onClose}
               className="rounded-xl border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
             >
-              Cancelar
+              {t.matchModal.cancel}
             </button>
             <button
               type="submit"
               disabled={busy || (liveValidation !== null && !liveValidation.valid)}
               className="rounded-xl bg-emerald-800 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
             >
-              {isCorrection ? 'Guardar corrección' : 'Confirmar resultado'}
+              {isCorrection ? t.matchModal.saveCorrection : t.matchModal.confirmResult}
             </button>
           </div>
         </form>

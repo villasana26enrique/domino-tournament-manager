@@ -110,3 +110,13 @@ Este documento registra las decisiones arquitectónicas (ADR), matemáticas y de
   2. **Llave Visual por Fases (`EliminationBracketView.tsx`):** Visible **exclusivamente en `qualifying_elimination`** (oculta en `rounds_all_play`), dentro de la pestaña `Llave` en torneo activo, en el toggle `Llave en vivo` de `ProjectionView` y en `CompletedTournamentScreen`. Muestra la Clasificatoria (R1–R2) con línea de corte en vivo (`Top 4 / Top 8 / Top 16`), cada fase eliminatoria y el podio final.
   3. **Pruebas E2E Playwright (`tests/e2e/tournament-phase5.spec.ts`):** Suite automatizada en navegador Chromium real para viewports desktop (`1280x800`) y móvil (`390x844`), levantando Vite automáticamente (`npm run test:e2e`).
   4. **Alcance diferido a Fase 6:** Generación y firma/prueba del instalador Windows `.exe` (NSIS) y manual rápido de 1 página.
+
+## ADR-014 — Aplicación bilingüe con Inglés principal, Español autodetectado y selector `EN | ES`
+
+- **Estado:** Aprobado (Pre-comercialización — PR #3)
+- **Contexto:** Para abrir el mercado internacional del microproducto manteniendo soporte completo en español, se prioriza el inglés como idioma canónico de descubrimiento (HTML/SEO) conservando detección automática del idioma del navegador.
+- **Decisión:**
+  1. **Motor i18n ligero (`src/i18n/`):** Diccionarios tipados con paridad estructural exacta (`en.ts` y `es.ts`) sin librerías externas pesadas, `I18nProvider` y selector instantáneo `EN | ES` en la cabecera.
+  2. **Detección y persistencia (`detectInitialLocale`):** Respeta primero la preferencia guardada en `localStorage` (`domino_tm_locale_v1`), luego detecta idiomas `es` / `es-*` de `navigator.languages`, y usa **inglés (`en`)** como idioma predeterminado principal.
+  3. **Reglas y PDFs bilingües:** `generateTournamentRules` (`CoreLocale = 'en' | 'es'`), `localizeRulesDocument`, `localizeStageName` y `pdf-exporter.ts` generan reglamento oficial, fases, tablas y reportes PDF íntegramente en inglés o español según el idioma activo.
+  4. **Limpieza web:** `index.html` actualizado a `lang="en"` con metadatos SEO en inglés y reemplazo de `"Vista previa"` por almacenamiento local del dispositivo.

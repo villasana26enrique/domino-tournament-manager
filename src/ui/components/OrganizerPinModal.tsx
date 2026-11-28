@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { KeyRound, Lock, ShieldCheck, ShieldOff, Unlock } from 'lucide-react';
 import { validatePinFormat } from '../../infrastructure/organizer-pin.js';
+import { useI18n } from '../../i18n/context.js';
+import { localizePinError } from '../../i18n/domain-labels.js';
 
 export type OrganizerPinModalMode = 'setup' | 'unlock' | 'manage';
 
@@ -23,19 +25,20 @@ export function OrganizerPinModal({
   onLockNow,
   onClearPin
 }: OrganizerPinModalProps) {
+  const { locale, t } = useI18n();
   const [pinInput, setPinInput] = useState('');
   const [confirmInput, setConfirmInput] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   function handleSetupSubmit(e: FormEvent) {
     e.preventDefault();
-    const formatError = validatePinFormat(pinInput);
+    const formatError = localizePinError(validatePinFormat(pinInput), locale);
     if (formatError) {
       setError(formatError);
       return;
     }
     if (pinInput.trim() !== confirmInput.trim()) {
-      setError('Los dos campos de PIN no coinciden.');
+      setError(t.pinModal.mismatchError);
       return;
     }
     onSetPin(pinInput.trim());
@@ -45,7 +48,7 @@ export function OrganizerPinModal({
   function handleUnlockSubmit(e: FormEvent) {
     e.preventDefault();
     if (!onVerifyAndUnlock(pinInput.trim())) {
-      setError('PIN incorrecto. Verifica e intenta de nuevo.');
+      setError(t.pinModal.wrongPinError);
       return;
     }
     onClose();
@@ -54,7 +57,7 @@ export function OrganizerPinModal({
   function handleClearSubmit(e: FormEvent) {
     e.preventDefault();
     if (!onClearPin(pinInput.trim())) {
-      setError('PIN incorrecto. No se pudo quitar la protección.');
+      setError(t.pinModal.clearWrongPinError);
       return;
     }
     onClose();
@@ -81,19 +84,19 @@ export function OrganizerPinModal({
           <div>
             <h2 id="organizer-pin-modal-title" className="text-lg font-bold text-stone-900">
               {mode === 'setup'
-                ? 'Proteger con PIN de organizador'
+                ? t.pinModal.setupTitle
                 : mode === 'unlock'
-                  ? 'PIN de organizador'
-                  : 'Modo organizador desbloqueado'}
+                  ? t.pinModal.unlockTitle
+                  : t.pinModal.manageTitle}
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-stone-600">
               {mode === 'setup'
-                ? 'Crea un PIN local de 4 a 6 dígitos (sin cuentas ni login) para ocultar herramientas de prueba y proteger eliminación, correcciones y retiros.'
+                ? t.pinModal.setupDesc
                 : mode === 'unlock'
                   ? actionDescription
-                    ? `Ingresa el PIN de organizador para ${actionDescription}.`
-                    : 'Ingresa tu PIN local de 4 a 6 dígitos para desbloquear acciones de organizador.'
-                  : 'Las acciones sensibles están habilitadas en esta sesión. Puedes volver a bloquearlas en cualquier momento o quitar el PIN.'}
+                    ? t.pinModal.unlockActionDesc(actionDescription)
+                    : t.pinModal.unlockGenericDesc
+                  : t.pinModal.manageDesc}
             </p>
           </div>
         </div>
@@ -101,7 +104,7 @@ export function OrganizerPinModal({
         {mode === 'setup' && (
           <form onSubmit={handleSetupSubmit} className="mt-5 space-y-3">
             <label className="block space-y-1 text-xs font-semibold text-stone-700">
-              <span>Nuevo PIN (4 a 6 dígitos)</span>
+              <span>{t.pinModal.newPinLabel}</span>
               <input
                 type="password"
                 inputMode="numeric"
@@ -111,14 +114,14 @@ export function OrganizerPinModal({
                   setPinInput(e.target.value);
                   setError(null);
                 }}
-                placeholder="Ej. 2468"
+                placeholder={t.pinModal.newPinPlaceholder}
                 autoFocus
                 className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm tracking-widest text-stone-900 focus:border-emerald-600 focus:outline-none"
               />
             </label>
 
             <label className="block space-y-1 text-xs font-semibold text-stone-700">
-              <span>Confirmar PIN</span>
+              <span>{t.pinModal.confirmPinLabel}</span>
               <input
                 type="password"
                 inputMode="numeric"
@@ -128,7 +131,7 @@ export function OrganizerPinModal({
                   setConfirmInput(e.target.value);
                   setError(null);
                 }}
-                placeholder="Repite el PIN"
+                placeholder={t.pinModal.confirmPinPlaceholder}
                 className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm tracking-widest text-stone-900 focus:border-emerald-600 focus:outline-none"
               />
             </label>
@@ -145,14 +148,14 @@ export function OrganizerPinModal({
                 onClick={onClose}
                 className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100"
               >
-                Cancelar
+                {t.pinModal.cancel}
               </button>
               <button
                 type="submit"
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-800 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
               >
                 <Lock className="h-3.5 w-3.5" />
-                Guardar y bloquear
+                {t.pinModal.saveAndLock}
               </button>
             </div>
           </form>
@@ -161,7 +164,7 @@ export function OrganizerPinModal({
         {mode === 'unlock' && (
           <form onSubmit={handleUnlockSubmit} className="mt-5 space-y-3">
             <label className="block space-y-1 text-xs font-semibold text-stone-700">
-              <span>Ingresa el PIN</span>
+              <span>{t.pinModal.enterPinLabel}</span>
               <input
                 type="password"
                 inputMode="numeric"
@@ -171,7 +174,7 @@ export function OrganizerPinModal({
                   setPinInput(e.target.value);
                   setError(null);
                 }}
-                placeholder="4 a 6 dígitos"
+                placeholder={t.pinModal.enterPinPlaceholder}
                 autoFocus
                 className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm tracking-widest text-stone-900 focus:border-emerald-600 focus:outline-none"
               />
@@ -189,14 +192,14 @@ export function OrganizerPinModal({
                 onClick={onClose}
                 className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100"
               >
-                Cancelar
+                {t.pinModal.cancel}
               </button>
               <button
                 type="submit"
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-800 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
               >
                 <Unlock className="h-3.5 w-3.5" />
-                Desbloquear
+                {t.pinModal.unlockButton}
               </button>
             </div>
           </form>
@@ -206,7 +209,7 @@ export function OrganizerPinModal({
           <div className="mt-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
               <span className="text-xs font-medium text-emerald-950">
-                Protección activa para esta máquina
+                {t.pinModal.activeBanner}
               </span>
               <button
                 type="button"
@@ -217,7 +220,7 @@ export function OrganizerPinModal({
                 className="inline-flex items-center gap-1.5 rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
               >
                 <Lock className="h-3.5 w-3.5" />
-                Bloquear ahora
+                {t.pinModal.lockNow}
               </button>
             </div>
 
@@ -226,7 +229,7 @@ export function OrganizerPinModal({
               className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-3.5"
             >
               <label className="block space-y-1 text-xs font-semibold text-stone-700">
-                <span>PIN actual para confirmar (si deseas quitar el PIN)</span>
+                <span>{t.pinModal.currentPinLabel}</span>
                 <input
                   type="password"
                   inputMode="numeric"
@@ -236,7 +239,7 @@ export function OrganizerPinModal({
                     setPinInput(e.target.value);
                     setError(null);
                   }}
-                  placeholder="PIN actual"
+                  placeholder={t.pinModal.currentPinPlaceholder}
                   className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm tracking-widest text-stone-900 focus:border-emerald-600 focus:outline-none"
                 />
               </label>
@@ -253,14 +256,14 @@ export function OrganizerPinModal({
                   onClick={onClose}
                   className="rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100"
                 >
-                  Cerrar
+                  {t.pinModal.close}
                 </button>
                 <button
                   type="submit"
                   className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100"
                 >
                   <ShieldOff className="h-3.5 w-3.5" />
-                  Quitar PIN
+                  {t.pinModal.removePin}
                 </button>
               </div>
             </form>

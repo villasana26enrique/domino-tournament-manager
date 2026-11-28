@@ -4,6 +4,7 @@ import type {
   BackupImportSummary,
   TournamentBackupPayload
 } from '../../application/tournament-service.js';
+import { useI18n } from '../../i18n/context.js';
 
 interface BackupModalProps {
   busy: boolean;
@@ -20,6 +21,7 @@ export function BackupModal({
   onExportBackup,
   onImportBackup
 }: BackupModalProps) {
+  const { locale, t } = useI18n();
   const [rawJson, setRawJson] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -36,17 +38,14 @@ export function BackupModal({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `respaldo-domino-${new Date().toISOString().slice(0, 10)}.json`;
+      const prefix = locale === 'en' ? 'domino-backup' : 'respaldo-domino';
+      link.download = `${prefix}-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
-    setStatusMessage(
-      `Respaldo exportado (${payload.tournaments.length} ${
-        payload.tournaments.length === 1 ? 'torneo' : 'torneos'
-      }).`
-    );
+    setStatusMessage(t.backupModal.exportedSuccess(payload.tournaments.length));
   }
 
   async function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
@@ -63,18 +62,18 @@ export function BackupModal({
     setLocalError(null);
     setStatusMessage(null);
     if (!rawJson.trim()) {
-      setLocalError('Selecciona un archivo .json o pega el contenido del respaldo.');
+      setLocalError(t.backupModal.emptyJsonError);
       return;
     }
 
     try {
       const summary = await onImportBackup(rawJson);
       setStatusMessage(
-        `Restauración completada: ${summary.importedCount} importado(s), ${summary.updatedCount} actualizado(s). Total en equipo: ${summary.totalAfter}.`
+        t.backupModal.restoreSuccess(summary.importedCount, summary.updatedCount, summary.totalAfter)
       );
       setRawJson('');
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'No se pudo restaurar el respaldo.');
+      setLocalError(err instanceof Error ? err.message : t.backupModal.restoreFailed);
     }
   }
 
@@ -93,17 +92,15 @@ export function BackupModal({
             </div>
             <div>
               <h2 id="backup-modal-title" className="text-lg font-bold text-stone-900">
-                Respaldo y restauración local
+                {t.backupModal.title}
               </h2>
-              <p className="text-xs text-stone-500">
-                Guarda una copia de tus torneos en un archivo JSON o restáurala en otro equipo.
-              </p>
+              <p className="text-xs text-stone-500">{t.backupModal.subtitle}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t.backupModal.closeAria}
             className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
           >
             <X className="h-5 w-5" />
@@ -112,10 +109,9 @@ export function BackupModal({
 
         {/* Export Section */}
         <div className="mt-5 rounded-2xl border border-stone-200 bg-stone-50 p-4">
-          <p className="text-xs font-bold text-stone-800">1. Exportar respaldo</p>
+          <p className="text-xs font-bold text-stone-800">{t.backupModal.exportHeading}</p>
           <p className="mt-1 text-xs text-stone-600">
-            Actualmente hay <strong>{tournamentCount}</strong>{' '}
-            {tournamentCount === 1 ? 'torneo guardado' : 'torneos guardados'} localmente.
+            {t.backupModal.exportCount(tournamentCount)}
           </p>
           <button
             type="button"
@@ -124,15 +120,15 @@ export function BackupModal({
             className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-800 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
           >
             <Download className="h-4 w-4" />
-            Descargar respaldo (.json)
+            {t.backupModal.exportButton}
           </button>
         </div>
 
         {/* Import Section */}
         <form onSubmit={handleRestore} className="mt-4 space-y-3 rounded-2xl border border-stone-200 p-4">
-          <p className="text-xs font-bold text-stone-800">2. Restaurar desde respaldo</p>
+          <p className="text-xs font-bold text-stone-800">{t.backupModal.importHeading}</p>
           <label className="block text-xs text-stone-600">
-            <span>Seleccionar archivo .json</span>
+            <span>{t.backupModal.selectFileLabel}</span>
             <input
               type="file"
               accept=".json,application/json"
@@ -142,7 +138,7 @@ export function BackupModal({
           </label>
 
           <label className="block space-y-1 text-xs text-stone-600">
-            <span>Pegar respaldo JSON</span>
+            <span>{t.backupModal.pasteJsonLabel}</span>
             <textarea
               rows={4}
               value={rawJson}
@@ -158,7 +154,7 @@ export function BackupModal({
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-700 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-100 disabled:opacity-40"
           >
             <Upload className="h-4 w-4" />
-            Restaurar respaldo
+            {t.backupModal.restoreButton}
           </button>
         </form>
 
@@ -181,7 +177,7 @@ export function BackupModal({
             onClick={onClose}
             className="rounded-xl border border-stone-300 px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
           >
-            Cerrar
+            {t.backupModal.closeButton}
           </button>
         </div>
       </div>

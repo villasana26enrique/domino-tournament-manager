@@ -24,7 +24,7 @@ describe('Fase 2 UI Flow (TDD — Inicio, Registro, Previsualización y Modalida
     const user = userEvent.setup();
     const service = createTestService();
 
-    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" />);
+    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" initialLocale="es" />);
 
     // 1. Inicio screen -> create tournament
     expect(await view.findByText(/Domino Tournament Manager/i)).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('Fase 2 UI Flow (TDD — Inicio, Registro, Previsualización y Modalida
     const user = userEvent.setup();
     const service = createTestService();
 
-    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" />);
+    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" initialLocale="es" />);
 
     const navButton = (await view.findAllByRole('button', { name: /Modalidades y reglamentos/i }))[0]!;
     await user.click(navButton);

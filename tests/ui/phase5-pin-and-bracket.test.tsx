@@ -43,7 +43,7 @@ describe('Fase 5 UI (TDD — Llave visual por fases y PIN local de organizador)'
     await service.updateConfig(elimTrn.id, { format: 'qualifying_elimination' });
     await service.confirmAndStartTournament(elimTrn.id);
 
-    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" />);
+    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" initialLocale="es" />);
 
     // Open rounds_all_play tournament -> must NOT show Llave tab
     const roundsHeading = await view.findByText('Torneo Por Rondas');
@@ -102,7 +102,7 @@ describe('Fase 5 UI (TDD — Llave visual por fases y PIN local de organizador)'
     await service.addParticipantsBulk(trn.id, 'P1\nP2\nP3\nP4\nP5\nP6\nP7\nP8');
     await service.confirmAndStartTournament(trn.id);
 
-    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" />);
+    const view = render(<App service={service} runtimeLabel="Entorno de pruebas" initialLocale="es" />);
     expect(await view.findByText('Torneo Protegido')).toBeInTheDocument();
 
     // Configure PIN 2468 from header -> automatically locks organizer mode

@@ -10,6 +10,7 @@ import {
   Users
 } from 'lucide-react';
 import type { TournamentRecord } from '../../application/ports/tournament-repository.js';
+import { useI18n } from '../../i18n/context.js';
 
 interface HomeScreenProps {
   tournaments: TournamentRecord[];
@@ -21,21 +22,12 @@ interface HomeScreenProps {
   onOpenModalities: () => void;
 }
 
-const STATUS_META: Record<
-  TournamentRecord['status'],
-  { label: string; badgeClass: string }
-> = {
-  draft: { label: 'Borrador', badgeClass: 'bg-amber-100 text-amber-800 border-amber-200' },
-  ready: { label: 'Listo', badgeClass: 'bg-sky-100 text-sky-800 border-sky-200' },
-  in_progress: {
-    label: 'En curso',
-    badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200'
-  },
-  completed: {
-    label: 'Finalizado',
-    badgeClass: 'bg-stone-200 text-stone-700 border-stone-300'
-  },
-  cancelled: { label: 'Cancelado', badgeClass: 'bg-rose-100 text-rose-700 border-rose-200' }
+const STATUS_BADGE_CLASS: Record<TournamentRecord['status'], string> = {
+  draft: 'bg-amber-100 text-amber-800 border-amber-200',
+  ready: 'bg-sky-100 text-sky-800 border-sky-200',
+  in_progress: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  completed: 'bg-stone-200 text-stone-700 border-stone-300',
+  cancelled: 'bg-rose-100 text-rose-700 border-rose-200'
 };
 
 export function HomeScreen({
@@ -47,6 +39,7 @@ export function HomeScreen({
   onOpenBackup,
   onOpenModalities
 }: HomeScreenProps) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
 
   async function handleSubmit(e: FormEvent) {
@@ -57,9 +50,9 @@ export function HomeScreen({
   }
 
   const activeOrDraft = tournaments.filter(
-    (t) => t.status === 'in_progress' || t.status === 'draft' || t.status === 'ready'
+    (item) => item.status === 'in_progress' || item.status === 'draft' || item.status === 'ready'
   );
-  const completed = tournaments.filter((t) => t.status === 'completed');
+  const completed = tournaments.filter((item) => item.status === 'completed');
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -69,14 +62,13 @@ export function HomeScreen({
           <div className="space-y-3 lg:col-span-3">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-100">
               <Trophy className="h-3.5 w-3.5" />
-              Offline-first · Parejas rotativas · Justo y explicable
+              {t.home.badge}
             </span>
             <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">
-              Organiza tu torneo de dominó en minutos
+              {t.home.heroTitle}
             </h1>
             <p className="max-w-xl text-sm leading-relaxed text-emerald-100/90 sm:text-base">
-              Inscribe a los jugadores y el motor arma mesas completas, evita compañeros repetidos y
-              genera automáticamente el reglamento oficial listo para empezar.
+              {t.home.heroDescription}
             </p>
           </div>
 
@@ -88,14 +80,14 @@ export function HomeScreen({
               htmlFor="new-tournament-name"
               className="block text-sm font-semibold text-white"
             >
-              Nombre del torneo
+              {t.home.tournamentNameLabel}
             </label>
             <input
               id="new-tournament-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ej. Copa Vecinos del Sábado"
+              placeholder={t.home.tournamentNamePlaceholder}
               maxLength={80}
               className="w-full rounded-xl border border-white/20 bg-white px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
             />
@@ -105,7 +97,7 @@ export function HomeScreen({
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-semibold text-stone-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
-              Crear torneo
+              {t.home.createButton}
             </button>
           </form>
         </div>
@@ -116,109 +108,107 @@ export function HomeScreen({
         {/* Active & Draft Tournaments */}
         <section className="space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-stone-900">Torneos activos y borradores</h2>
+            <h2 className="text-lg font-semibold text-stone-900">{t.home.activeSectionTitle}</h2>
             <span className="text-xs font-medium text-stone-500">
-              {activeOrDraft.length} {activeOrDraft.length === 1 ? 'registro' : 'registros'}
+              {activeOrDraft.length}{' '}
+              {activeOrDraft.length === 1 ? t.home.recordSingular : t.home.recordPlural}
             </span>
           </div>
 
           {activeOrDraft.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-8 text-center">
               <Users className="mx-auto h-9 w-9 text-stone-400" />
-              <p className="mt-3 text-sm font-medium text-stone-700">
-                Todavía no hay torneos creados
-              </p>
-              <p className="mt-1 text-xs text-stone-500">
-                Escribe un nombre arriba y presiona “Crear torneo” para registrar a los participantes.
-              </p>
+              <p className="mt-3 text-sm font-medium text-stone-700">{t.home.emptyTitle}</p>
+              <p className="mt-1 text-xs text-stone-500">{t.home.emptyDescription}</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {activeOrDraft.map((t) => {
-                const status = STATUS_META[t.status];
-                return (
-                  <article
-                    key={t.id}
-                    className="flex flex-col justify-between gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-xs transition hover:border-emerald-300 sm:flex-row sm:items-center sm:p-5"
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-semibold text-stone-900">{t.name}</h3>
-                        <span
-                          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${status.badgeClass}`}
-                        >
-                          {status.label}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-stone-500">
-                        <span className="inline-flex items-center gap-1">
-                          <Users className="h-3.5 w-3.5" />
-                          {t.participants.length} participantes
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <CalendarDays className="h-3.5 w-3.5" />
-                          {t.config.format === 'rounds_all_play'
-                            ? 'Por rondas'
-                            : 'Clasificatoria + Eliminaciones'}
-                        </span>
-                      </div>
-                    </div>
-
+              {activeOrDraft.map((item) => (
+                <article
+                  key={item.id}
+                  className="flex flex-col justify-between gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-xs transition hover:border-emerald-300 sm:flex-row sm:items-center sm:p-5"
+                >
+                  <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onRequestDeleteTournament(t)}
-                        aria-label={`Eliminar ${t.name}`}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3 py-2 text-xs font-medium text-stone-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700"
+                      <h3 className="text-base font-semibold text-stone-900">{item.name}</h3>
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[item.status]}`}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Eliminar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onOpenTournament(t)}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-800 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 sm:flex-none"
-                      >
-                        {t.status === 'in_progress' ? 'Continuar torneo' : 'Abrir'}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </button>
+                        {t.home.status[item.status]}
+                      </span>
                     </div>
-                  </article>
-                );
-              })}
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-stone-500">
+                      <span className="inline-flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5" />
+                        {t.home.participantsCount(item.participants.length)}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {item.config.format === 'rounds_all_play'
+                          ? t.home.formatRounds
+                          : t.home.formatElimination}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onRequestDeleteTournament(item)}
+                      aria-label={t.home.deleteAria(item.name)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3 py-2 text-xs font-medium text-stone-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {t.home.deleteButton}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenTournament(item)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-800 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 sm:flex-none"
+                    >
+                      {item.status === 'in_progress'
+                        ? t.home.continueTournament
+                        : t.home.openDraft}
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </article>
+              ))}
             </div>
           )}
 
           {completed.length > 0 && (
             <div className="space-y-3 pt-4">
-              <h2 className="text-lg font-semibold text-stone-900">Historial finalizado</h2>
-              {completed.map((t) => (
+              <h2 className="text-lg font-semibold text-stone-900">
+                {t.home.completedSectionTitle}
+              </h2>
+              {completed.map((item) => (
                 <article
-                  key={t.id}
+                  key={item.id}
                   className="flex flex-col justify-between gap-3 rounded-2xl border border-stone-200 bg-white px-5 py-4 sm:flex-row sm:items-center"
                 >
                   <div>
-                    <h3 className="text-sm font-semibold text-stone-900">{t.name}</h3>
+                    <h3 className="text-sm font-semibold text-stone-900">{item.name}</h3>
                     <p className="text-xs text-stone-500">
-                      {t.participants.length} jugadores · {t.plannedRounds} rondas
+                      {t.home.completedMeta(item.participants.length, item.plannedRounds)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onRequestDeleteTournament(t)}
-                      aria-label={`Eliminar ${t.name}`}
+                      onClick={() => onRequestDeleteTournament(item)}
+                      aria-label={t.home.deleteAria(item.name)}
                       className="inline-flex items-center gap-1 rounded-xl border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Eliminar
+                      {t.home.deleteButton}
                     </button>
                     <button
                       type="button"
-                      onClick={() => onOpenTournament(t)}
+                      onClick={() => onOpenTournament(item)}
                       className="rounded-xl border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-800 hover:bg-stone-50"
                     >
-                      Ver resumen
+                      {t.home.viewSummary}
                     </button>
                   </div>
                 </article>
@@ -234,19 +224,17 @@ export function HomeScreen({
               <BookOpen className="h-5 w-5" />
             </div>
             <h2 className="mt-4 text-base font-semibold text-stone-900">
-              Modalidades y reglamentos
+              {t.home.sidebarModalitiesTitle}
             </h2>
             <p className="mt-1.5 text-xs leading-relaxed text-stone-600">
-              Consulta cómo funcionan los torneos <strong>Por rondas</strong> (solo múltiplos de 4
-              sin descansos) y <strong>Clasificatoria con eliminaciones hasta la Final</strong>,
-              además de las reglas de tiempo y desempates.
+              {t.home.sidebarModalitiesDesc}
             </p>
             <button
               type="button"
               onClick={onOpenModalities}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-100"
             >
-              Ver modalidades y reglamentos
+              {t.home.viewModalitiesButton}
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -254,11 +242,12 @@ export function HomeScreen({
           <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
             <div className="flex items-center gap-2.5">
               <HardDrive className="h-5 w-5 text-emerald-700" />
-              <h2 className="text-sm font-semibold text-stone-900">Respaldo y portabilidad</h2>
+              <h2 className="text-sm font-semibold text-stone-900">
+                {t.home.sidebarBackupTitle}
+              </h2>
             </div>
             <p className="mt-1.5 text-xs leading-relaxed text-stone-600">
-              Exporta o restaura tus torneos en un archivo JSON local para respaldar o mover datos a
-              otro equipo.
+              {t.home.sidebarBackupDesc}
             </p>
             <button
               type="button"
@@ -266,16 +255,13 @@ export function HomeScreen({
               className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-stone-300 bg-stone-50 px-4 py-2 text-xs font-semibold text-stone-800 transition hover:bg-stone-100"
             >
               <HardDrive className="h-3.5 w-3.5" />
-              Respaldo local
+              {t.home.backupButton}
             </button>
           </div>
 
           <div className="rounded-2xl border border-stone-200 bg-stone-100/70 p-5 text-xs text-stone-600">
-            <p className="font-semibold text-stone-800">Regla de cierre por tiempo</p>
-            <p className="mt-1 leading-relaxed">
-              Al agotarse los 25 minutos, se culmina únicamente la mano en curso y se anotan los
-              puntos exactos. Si hay igualdad, queda registrada como empate (sin muerte súbita).
-            </p>
+            <p className="font-semibold text-stone-800">{t.home.sidebarTimeRuleTitle}</p>
+            <p className="mt-1 leading-relaxed">{t.home.sidebarTimeRuleDesc}</p>
           </div>
         </aside>
       </div>

@@ -1,3 +1,5 @@
+export type CoreLocale = 'en' | 'es';
+
 export type TournamentFormat = 'rounds_all_play' | 'qualifying_elimination';
 
 export type RoundPhase = 'regular' | 'qualifying' | 'elimination' | 'final';

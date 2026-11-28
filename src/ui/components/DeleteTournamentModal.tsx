@@ -1,5 +1,6 @@
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import type { TournamentRecord } from '../../application/ports/tournament-repository.js';
+import { useI18n } from '../../i18n/context.js';
 
 interface DeleteTournamentModalProps {
   tournament: TournamentRecord;
@@ -8,22 +9,14 @@ interface DeleteTournamentModalProps {
   onConfirmDelete: () => Promise<void>;
 }
 
-const STATUS_WARNING: Record<TournamentRecord['status'], string> = {
-  draft: 'Se eliminará este borrador y la lista de participantes registrados.',
-  ready: 'Se eliminará este torneo preparado y su lista de participantes.',
-  in_progress:
-    'Este torneo está EN CURSO. Si lo eliminas, se perderán permanentemente sus rondas, cronómetro y marcadores.',
-  completed:
-    'Este torneo ya está FINALIZADO. Si lo eliminas, se perderán su campeón, clasificación e historial.',
-  cancelled: 'Se eliminará permanentemente este registro.'
-};
-
 export function DeleteTournamentModal({
   tournament,
   busy,
   onCancel,
   onConfirmDelete
 }: DeleteTournamentModalProps) {
+  const { t } = useI18n();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-xs">
       <div
@@ -38,16 +31,17 @@ export function DeleteTournamentModal({
           </div>
           <div>
             <h2 id="delete-modal-title" className="text-lg font-bold text-stone-900">
-              ¿Eliminar torneo?
+              {t.deleteModal.title}
             </h2>
             <p className="mt-1 text-sm text-stone-600">
-              Vas a eliminar <span className="font-semibold text-stone-900">{tournament.name}</span>.
+              {t.deleteModal.subtitlePrefix}{' '}
+              <span className="font-semibold text-stone-900">{tournament.name}</span>.
             </p>
           </div>
         </div>
 
         <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs leading-relaxed text-rose-900">
-          {STATUS_WARNING[tournament.status]} Esta acción no se puede deshacer.
+          {t.deleteModal.warnings[tournament.status]} {t.deleteModal.irreversibleSuffix}
         </p>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -57,7 +51,7 @@ export function DeleteTournamentModal({
             onClick={onCancel}
             className="rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-100"
           >
-            Cancelar
+            {t.deleteModal.cancel}
           </button>
           <button
             type="button"
@@ -66,7 +60,7 @@ export function DeleteTournamentModal({
             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
-            Sí, eliminar
+            {t.deleteModal.confirmDelete}
           </button>
         </div>
       </div>
