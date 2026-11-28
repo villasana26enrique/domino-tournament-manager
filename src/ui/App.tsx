@@ -433,14 +433,15 @@ function AppContent({
     <div className="min-h-screen bg-stone-50 text-stone-900">
       {/* Top Navigation */}
       <header className="no-print sticky top-0 z-20 border-b border-stone-200 bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-1.5 px-2.5 py-2 sm:gap-4 sm:px-6 sm:py-3">
           <button
             type="button"
             onClick={() => navigateWithGuard('home')}
-            className="flex min-w-0 items-center gap-2.5 text-left sm:gap-3"
+            aria-label={t.app.title}
+            className="flex min-w-0 items-center gap-2 text-left sm:gap-3"
           >
             <DominoLogo className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
-            <div className="min-w-0">
+            <div className="hidden min-w-0 md:block">
               <p className="truncate text-xs font-bold tracking-tight text-stone-900 sm:text-sm">
                 {t.app.title}
               </p>
@@ -450,7 +451,7 @@ function AppContent({
             </div>
           </button>
 
-          <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <nav className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
             <span className="hidden items-center gap-1.5 rounded-full border border-stone-200 bg-stone-100 px-3 py-1 text-[11px] font-medium text-stone-600 lg:inline-flex">
               <Database className="h-3 w-3 text-emerald-700" />
               {localizeRuntimeLabel(runtimeLabel, locale)}
@@ -459,7 +460,8 @@ function AppContent({
               <button
                 type="button"
                 onClick={() => void promptInstall()}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-100 sm:px-3"
+                aria-label={t.app.installApp}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-100 sm:px-3"
               >
                 <Download className="h-3.5 w-3.5 text-emerald-700" />
                 <span className="hidden md:inline">{t.app.installApp}</span>
@@ -468,28 +470,28 @@ function AppContent({
             <button
               type="button"
               onClick={() => navigateWithGuard('home')}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition sm:px-3 ${
+              aria-label={t.app.homeNav}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-semibold transition sm:px-3 ${
                 screen === 'home'
                   ? 'bg-emerald-900 text-white'
                   : 'text-stone-600 hover:bg-stone-100'
               }`}
             >
-              <Home className="h-3.5 w-3.5" />
-              {t.app.homeNav}
+              <Home className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">{t.app.homeNav}</span>
             </button>
             <button
               type="button"
               onClick={() => navigateWithGuard('modalities')}
               aria-label={t.app.modalitiesNav}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition sm:px-3 ${
+              className={`inline-flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-semibold transition sm:px-3 ${
                 screen === 'modalities'
                   ? 'bg-emerald-900 text-white'
                   : 'text-stone-600 hover:bg-stone-100'
               }`}
             >
-              <BookOpen className="h-3.5 w-3.5" />
+              <BookOpen className="h-3.5 w-3.5 shrink-0" />
               <span className="hidden sm:inline">{t.app.modalitiesNav}</span>
-              <span className="sm:hidden">{t.app.modalitiesShortNav}</span>
             </button>
 
             <button
@@ -499,7 +501,7 @@ function AppContent({
                   mode: !hasOrganizerPin ? 'setup' : organizerLocked ? 'unlock' : 'manage'
                 })
               }
-              className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-semibold transition sm:px-3 ${
+              className={`inline-flex items-center gap-1 rounded-xl border px-2 py-1.5 text-xs font-semibold transition sm:gap-1.5 sm:px-3 ${
                 !hasOrganizerPin
                   ? 'border-stone-300 bg-white text-stone-700 hover:bg-stone-100'
                   : organizerLocked
@@ -509,18 +511,18 @@ function AppContent({
             >
               {!hasOrganizerPin ? (
                 <>
-                  <KeyRound className="h-3.5 w-3.5 text-stone-600" />
+                  <KeyRound className="h-3.5 w-3.5 shrink-0 text-stone-600" />
                   <span className="hidden sm:inline">{t.app.pinProtect}</span>
                   <span className="sm:hidden">{t.app.pinShort}</span>
                 </>
               ) : organizerLocked ? (
                 <>
-                  <Lock className="h-3.5 w-3.5 text-amber-700" />
+                  <Lock className="h-3.5 w-3.5 shrink-0 text-amber-700" />
                   <span>{t.app.pinLocked}</span>
                 </>
               ) : (
                 <>
-                  <Unlock className="h-3.5 w-3.5 text-emerald-700" />
+                  <Unlock className="h-3.5 w-3.5 shrink-0 text-emerald-700" />
                   <span>{t.app.pinUnlocked}</span>
                 </>
               )}
@@ -529,14 +531,16 @@ function AppContent({
             <button
               type="button"
               onClick={() => openProModal()}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-bold transition sm:px-3 ${
+              aria-label={isPro ? t.app.proActive : t.app.getPro}
+              className={`inline-flex items-center gap-1 rounded-xl px-2 py-1.5 text-xs font-bold transition sm:gap-1.5 sm:px-3 ${
                 isPro
                   ? 'border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
                   : 'bg-amber-400 text-stone-950 hover:bg-amber-300'
               }`}
             >
-              <Crown className="h-3.5 w-3.5" />
-              <span>{isPro ? t.app.proActive : t.app.getPro}</span>
+              <Crown className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">{isPro ? t.app.proActive : t.app.getPro}</span>
+              <span className="sm:hidden">{t.app.proActive}</span>
             </button>
 
             <div
@@ -550,7 +554,7 @@ function AppContent({
                   type="button"
                   aria-pressed={locale === code}
                   onClick={() => setLocale(code)}
-                  className={`rounded-lg px-2 py-1 uppercase transition ${
+                  className={`rounded-lg px-1.5 py-1 uppercase transition sm:px-2 ${
                     locale === code
                       ? 'bg-white text-emerald-900 shadow-xs'
                       : 'text-stone-500 hover:text-stone-900'
