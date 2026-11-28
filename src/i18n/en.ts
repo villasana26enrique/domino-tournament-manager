@@ -516,7 +516,7 @@ export const en = {
     brandingSectionTitle: 'Club / Event Branding (TV & PDFs)',
     brandingDesc:
       'Stored locally on this device only. Appears in TV Projection Mode, clean PDFs, and WhatsApp cards.',
-    clubNameLabel: 'Club or event name',
+    clubNameLabel: 'Name',
     clubNamePlaceholder: 'e.g. Saturday Domino Club',
     logoLabel: 'Club logo (PNG, JPEG, WebP, SVG · max 250 KB)',
     chooseLogoButton: 'Upload logo image',

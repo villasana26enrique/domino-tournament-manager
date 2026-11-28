@@ -523,7 +523,7 @@ export const es: Translations = {
     brandingSectionTitle: 'Marca del Club / Evento (TV y PDFs)',
     brandingDesc:
       'Se guarda solo localmente en este equipo. Aparece en Modo Proyección, PDFs limpios y tarjeta de WhatsApp.',
-    clubNameLabel: 'Nombre del club o evento',
+    clubNameLabel: 'Nombre',
     clubNamePlaceholder: 'Ej. Club Dominó El Cafetal',
     logoLabel: 'Logo del club (PNG, JPEG, WebP, SVG · máx 250 KB)',
     chooseLogoButton: 'Subir logo',

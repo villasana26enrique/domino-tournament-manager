@@ -85,7 +85,7 @@ test.describe('Pro Licensing, Club Branding & Free >16 Gate (E2E)', () => {
 
     await expect(dialog.getByText(/Pro unlocked! Licensed to Enrique Villasana/i)).toBeVisible();
 
-    await dialog.getByLabel(/Club or event name/i).fill('Club Vecinos');
+    await dialog.getByLabel('Name', { exact: true }).fill('Club Vecinos');
     await dialog.getByRole('button', { name: 'Save branding' }).click();
     await expect(dialog.getByText(/Club branding saved/i)).toBeVisible();
     await dialog.getByRole('button', { name: 'Close Pro modal' }).click();

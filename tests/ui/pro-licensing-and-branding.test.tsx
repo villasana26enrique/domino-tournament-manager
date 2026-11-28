@@ -102,7 +102,7 @@ describe('Pro Licensing, Free >16 Gate, Club Branding & WhatsApp Card UI (TDD)',
     ).toBeInTheDocument();
 
     // Configure Club Branding inside the active Pro modal
-    const clubInput = within(dialog).getByLabelText(/Club or event name/i);
+    const clubInput = within(dialog).getByLabelText(/^Name$/i);
     await user.type(clubInput, 'Club Vecinos Caracas');
     await user.click(within(dialog).getByRole('button', { name: /Save branding/i }));
     expect(await within(dialog).findByText(/Club branding saved/i)).toBeInTheDocument();
