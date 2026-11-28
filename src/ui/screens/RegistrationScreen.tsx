@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  Crown,
   Info,
   Pencil,
   Sparkles,
@@ -15,16 +16,19 @@ import { getAvailableTournamentFormats } from '../../core/index.js';
 import type { TournamentRecord } from '../../application/ports/tournament-repository.js';
 import { useI18n } from '../../i18n/context.js';
 import { localizeFormatAvailability } from '../../i18n/domain-labels.js';
+import { FREE_MAX_PLAYERS } from '../../infrastructure/commercial-config.js';
 
 interface RegistrationScreenProps {
   tournament: TournamentRecord;
   busy: boolean;
+  isPro: boolean;
   onBackHome: () => void;
   onAddParticipant: (name: string) => Promise<void>;
   onAddBulk: (rawLines: string) => Promise<void>;
   onUpdateParticipant: (participantId: string, newName: string) => Promise<void>;
   onRemoveParticipant: (participantId: string) => Promise<void>;
   onGoToPreview: () => Promise<void>;
+  onOpenProModal: (reason?: 'player_limit') => void;
 }
 
 const SAMPLE_NAMES = [
@@ -58,12 +62,14 @@ const SAMPLE_NAMES = [
 export function RegistrationScreen({
   tournament,
   busy,
+  isPro,
   onBackHome,
   onAddParticipant,
   onAddBulk,
   onUpdateParticipant,
   onRemoveParticipant,
-  onGoToPreview
+  onGoToPreview,
+  onOpenProModal
 }: RegistrationScreenProps) {
   const { locale, t } = useI18n();
   const [singleName, setSingleName] = useState('');
@@ -164,6 +170,23 @@ export function RegistrationScreen({
                 ? t.registration.multipleOf4Banner
                 : formats?.[0]?.reason}
           </p>
+          {!isPro && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+              <span className="font-medium opacity-90">
+                {count >= FREE_MAX_PLAYERS
+                  ? t.registration.freeLimitReached(FREE_MAX_PLAYERS)
+                  : t.registration.freeLimitHint(count, FREE_MAX_PLAYERS)}
+              </span>
+              <button
+                type="button"
+                onClick={() => onOpenProModal('player_limit')}
+                className="inline-flex items-center gap-1 rounded-lg bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold text-stone-950 transition hover:bg-amber-300"
+              >
+                <Crown className="h-3 w-3" />
+                {t.registration.upgradeProShort}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -244,9 +267,14 @@ export function RegistrationScreen({
                     type="button"
                     disabled={busy}
                     onClick={() => void handleQuickSample(n)}
-                    className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 transition hover:border-emerald-500 hover:text-emerald-800"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 transition hover:border-emerald-500 hover:text-emerald-800"
                   >
                     {t.registration.quickSamplePlayers(n)}
+                    {!isPro && n > FREE_MAX_PLAYERS && (
+                      <span className="rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-950">
+                        {t.registration.proTag}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>

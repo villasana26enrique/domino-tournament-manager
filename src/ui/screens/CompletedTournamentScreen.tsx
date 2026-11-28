@@ -1,12 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Award,
   BarChart3,
+  Crown,
   Download,
   GitBranch,
   History,
   Printer,
+  Share2,
   Trophy,
   Users
 } from 'lucide-react';
@@ -17,10 +19,12 @@ import {
   type StandingRow
 } from '../../core/index.js';
 import type { TournamentRecord } from '../../application/ports/tournament-repository.js';
+import type { ClubBranding } from '../../infrastructure/club-branding-store.js';
 import {
   downloadFinalReportPdf,
   downloadRulesPdf
 } from '../../infrastructure/pdf-exporter.js';
+import { shareChampionCard } from '../../infrastructure/share-card-exporter.js';
 import { useI18n } from '../../i18n/context.js';
 import { localizeRulesDocument, localizeStageName } from '../../i18n/domain-labels.js';
 import { EliminationBracketView } from '../components/EliminationBracketView.js';
@@ -29,15 +33,23 @@ import { StandingsTable } from '../components/StandingsTable.js';
 interface CompletedTournamentScreenProps {
   tournament: TournamentRecord;
   standings: StandingRow[];
+  isPro: boolean;
+  clubBranding?: ClubBranding;
   onBackHome: () => void;
+  onOpenProModal: (reason?: 'share_card') => void;
 }
 
 export function CompletedTournamentScreen({
   tournament,
   standings,
-  onBackHome
+  isPro,
+  clubBranding,
+  onBackHome,
+  onOpenProModal
 }: CompletedTournamentScreenProps) {
   const { locale, t } = useI18n();
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [sharingCard, setSharingCard] = useState(false);
 
   const participantById = new Map(tournament.participants.map((p) => [p.id, p]));
   const nameOf = (id: string) => {
@@ -94,6 +106,31 @@ export function CompletedTournamentScreen({
   const finalChampion = tournament.finalChampion;
   const topChampion = finalChampion?.individualChampion ?? standings[0];
 
+  async function handleShareWhatsAppCard() {
+    if (!isPro) {
+      onOpenProModal('share_card');
+      return;
+    }
+    setSharingCard(true);
+    setShareStatus(null);
+    try {
+      const outcome = await shareChampionCard({
+        tournament,
+        standings,
+        stats,
+        locale,
+        ...(clubBranding ? { clubBranding } : {})
+      });
+      setShareStatus(
+        outcome === 'shared' ? t.completed.shareCardShared : t.completed.shareCardReady
+      );
+    } catch {
+      setShareStatus(t.completed.shareCardError);
+    } finally {
+      setSharingCard(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="no-print flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -109,7 +146,26 @@ export function CompletedTournamentScreen({
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => downloadFinalReportPdf(tournament, standings, stats, locale)}
+            disabled={sharingCard}
+            onClick={() => void handleShareWhatsAppCard()}
+            className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+              isPro
+                ? 'bg-amber-400 text-stone-950 hover:bg-amber-300'
+                : 'border border-amber-300 bg-amber-50 text-amber-950 hover:bg-amber-100'
+            }`}
+          >
+            {isPro ? <Share2 className="h-3.5 w-3.5" /> : <Crown className="h-3.5 w-3.5 text-amber-700" />}
+            {t.completed.shareCardPng}
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              downloadFinalReportPdf(tournament, standings, stats, locale, {
+                isPro,
+                ...(clubBranding ? { clubBranding } : {})
+              })
+            }
             className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-800 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
           >
             <Download className="h-3.5 w-3.5" />
@@ -120,7 +176,10 @@ export function CompletedTournamentScreen({
             <button
               type="button"
               onClick={() =>
-                downloadRulesPdf(tournament.name, localizedRules, tournament.seed, locale)
+                downloadRulesPdf(tournament.name, localizedRules, tournament.seed, locale, {
+                  isPro,
+                  ...(clubBranding ? { clubBranding } : {})
+                })
               }
               className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-800 hover:bg-stone-50"
             >
@@ -139,6 +198,12 @@ export function CompletedTournamentScreen({
           </button>
         </div>
       </div>
+
+      {shareStatus && (
+        <div className="no-print rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-900">
+          {shareStatus}
+        </div>
+      )}
 
       {/* Champion Celebration Banner */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-stone-900 p-6 text-white shadow-lg sm:p-8">

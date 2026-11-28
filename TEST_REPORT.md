@@ -119,6 +119,17 @@ Este archivo conserva evidencia real y reproducible de cada comando de verificac
 
 ---
 
+## Verificación PR #5 — Licenciamiento Pro Offline Ed25519, Branding y Tarjeta PNG (`feature/pro-licensing-branding-share`, `2026-11-27`)
+
+- `npm run typecheck`: **APROBADO** (0 errores bajo `strict: true`).
+- `npm test`: **22/22 archivos, 106/106 pruebas aprobadas** en `4.12s`:
+  - Nuevas suites: `tests/infrastructure/license-store.test.ts` (4/4), `tests/infrastructure/club-branding-and-share.test.ts` (3/3), `tests/ui/pro-licensing-and-branding.test.tsx` (2/2).
+- `npm run build`: **APROBADO** (`vite build` en `1.67s` + `PWA v2.0.0`, 20 entradas precacheadas, `1709.12 KiB`).
+- `npm run test:e2e`: **14/14 pruebas Playwright aprobadas** en `8.3s` (7 desktop `1280x800` + 7 mobile `390x844`), incluyendo límite Free >16, rechazo de claves falsas, activación real Ed25519 persistente tras recarga, branding del club en TV y bloqueo de tarjeta PNG en Free.
+- `npm run simulate:matrix -- --seeds 1,2`: **42/42 torneos** con **0 violaciones de restricciones**.
+
+---
+
 ## Pendiente en Fase 6
 
 - Build del instalador NSIS `.exe` en Windows (CI / máquina Windows), prueba real en PC Windows limpia *(no se declarará funcional hasta probarse en Windows)* y manual rápido de 1 página para organizadores.

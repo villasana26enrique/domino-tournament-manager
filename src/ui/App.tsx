@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   BookOpen,
+  Crown,
   Database,
   Download,
   Home,
@@ -16,6 +17,15 @@ import type { TournamentService } from '../application/tournament-service.js';
 import { I18nProvider, useI18n } from '../i18n/context.js';
 import { localizeRuntimeLabel } from '../i18n/domain-labels.js';
 import type { Locale } from '../i18n/locale.js';
+import {
+  createClubBrandingStore,
+  type ClubBranding
+} from '../infrastructure/club-branding-store.js';
+import { FREE_MAX_PLAYERS } from '../infrastructure/commercial-config.js';
+import {
+  createLicenseStore,
+  type LicenseState
+} from '../infrastructure/license-store.js';
 import { createOrganizerPinStore } from '../infrastructure/organizer-pin.js';
 import { usePwaInstall } from './hooks/usePwaInstall.js';
 import { BackupModal } from './components/BackupModal.js';
@@ -26,6 +36,10 @@ import {
   OrganizerPinModal,
   type OrganizerPinModalMode
 } from './components/OrganizerPinModal.js';
+import {
+  ProLicenseModal,
+  type ProModalGateReason
+} from './components/ProLicenseModal.js';
 import { ActiveTournamentScreen } from './screens/ActiveTournamentScreen.js';
 import { CompletedTournamentScreen } from './screens/CompletedTournamentScreen.js';
 import { HomeScreen } from './screens/HomeScreen.js';
@@ -39,22 +53,29 @@ export interface AppProps {
   service: TournamentService;
   runtimeLabel: string;
   initialLocale?: Locale;
+  licensePublicKey?: string;
 }
 
-export function App({ service, runtimeLabel, initialLocale }: AppProps) {
+export function App({ service, runtimeLabel, initialLocale, licensePublicKey }: AppProps) {
   return (
     <I18nProvider {...(initialLocale ? { initialLocale } : {})}>
-      <AppContent service={service} runtimeLabel={runtimeLabel} />
+      <AppContent
+        service={service}
+        runtimeLabel={runtimeLabel}
+        {...(licensePublicKey ? { licensePublicKey } : {})}
+      />
     </I18nProvider>
   );
 }
 
 function AppContent({
   service,
-  runtimeLabel
+  runtimeLabel,
+  licensePublicKey
 }: {
   service: TournamentService;
   runtimeLabel: string;
+  licensePublicKey?: string;
 }) {
   const { locale, setLocale, t } = useI18n();
   const { canInstall, promptInstall } = usePwaInstall();
@@ -68,6 +89,29 @@ function AppContent({
   const [pendingDeleteTournament, setPendingDeleteTournament] =
     useState<TournamentRecord | null>(null);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
+
+  const licenseStore = useMemo(() => createLicenseStore(undefined, licensePublicKey), [licensePublicKey]);
+  const brandingStore = useMemo(() => createClubBrandingStore(), []);
+  const [licenseState, setLicenseState] = useState<LicenseState>({ tier: 'free', license: null });
+  const [clubBranding, setClubBranding] = useState<ClubBranding>(() => brandingStore.load());
+  const [proModalState, setProModalState] = useState<{ reason?: ProModalGateReason } | null>(null);
+
+  const isPro = licenseState.tier === 'pro';
+  const effectiveBranding = isPro ? clubBranding : undefined;
+
+  useEffect(() => {
+    let active = true;
+    void licenseStore.loadVerifiedLicense().then((state) => {
+      if (active) setLicenseState(state);
+    });
+    return () => {
+      active = false;
+    };
+  }, [licenseStore]);
+
+  const openProModal = useCallback((reason?: ProModalGateReason) => {
+    setProModalState(reason ? { reason } : {});
+  }, []);
 
   const organizerPinStore = useMemo(() => createOrganizerPinStore(), []);
   const [hasOrganizerPin, setHasOrganizerPin] = useState(() => organizerPinStore.hasPin());
@@ -194,6 +238,10 @@ function AppContent({
 
   async function handleAddParticipant(name: string) {
     if (!current) return;
+    if (!isPro && current.participants.length >= FREE_MAX_PLAYERS) {
+      openProModal('player_limit');
+      return;
+    }
     const updated = await runAction(() => service.addParticipant(current.id, name));
     if (updated) {
       setCurrent(updated);
@@ -203,6 +251,14 @@ function AppContent({
 
   async function handleAddBulk(rawLines: string) {
     if (!current) return;
+    const incomingCount = rawLines
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0).length;
+    if (!isPro && current.participants.length + incomingCount > FREE_MAX_PLAYERS) {
+      openProModal('player_limit');
+      return;
+    }
     const updated = await runAction(() => service.addParticipantsBulk(current.id, rawLines));
     if (updated) {
       setCurrent(updated);
@@ -470,6 +526,19 @@ function AppContent({
               )}
             </button>
 
+            <button
+              type="button"
+              onClick={() => openProModal()}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-bold transition sm:px-3 ${
+                isPro
+                  ? 'border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+                  : 'bg-amber-400 text-stone-950 hover:bg-amber-300'
+              }`}
+            >
+              <Crown className="h-3.5 w-3.5" />
+              <span>{isPro ? t.app.proActive : t.app.getPro}</span>
+            </button>
+
             <div
               role="group"
               aria-label="Language / Idioma"
@@ -521,6 +590,7 @@ function AppContent({
           <HomeScreen
             tournaments={tournaments}
             busy={busy}
+            isPro={isPro}
             onCreateTournament={handleCreateTournament}
             onOpenTournament={handleOpenTournament}
             onRequestDeleteTournament={(item) =>
@@ -531,6 +601,7 @@ function AppContent({
             }
             onOpenBackup={() => setBackupModalOpen(true)}
             onOpenModalities={() => setScreen('modalities')}
+            onOpenProModal={(reason) => openProModal(reason)}
           />
         )}
 
@@ -538,12 +609,14 @@ function AppContent({
           <RegistrationScreen
             tournament={current}
             busy={busy}
+            isPro={isPro}
             onBackHome={() => setScreen('home')}
             onAddParticipant={handleAddParticipant}
             onAddBulk={handleAddBulk}
             onUpdateParticipant={handleUpdateParticipant}
             onRemoveParticipant={handleRemoveParticipant}
             onGoToPreview={handleGoToPreview}
+            onOpenProModal={(reason) => openProModal(reason)}
           />
         )}
 
@@ -552,6 +625,8 @@ function AppContent({
             tournament={current}
             plan={previewPlan}
             busy={busy}
+            isPro={isPro}
+            {...(effectiveBranding ? { clubBranding: effectiveBranding } : {})}
             onEditParticipants={() => setScreen('register')}
             onUpdateConfig={handleUpdateConfig}
             onRegenerateSeed={handleRegenerateSeed}
@@ -564,6 +639,8 @@ function AppContent({
             tournament={current}
             standings={liveStandings}
             busy={busy}
+            isPro={isPro}
+            {...(effectiveBranding ? { clubBranding: effectiveBranding } : {})}
             organizerLocked={organizerLocked}
             onRequireOrganizerAction={requireOrganizerAction}
             onRequestLeave={() => navigateWithGuard('home')}
@@ -583,7 +660,10 @@ function AppContent({
           <CompletedTournamentScreen
             tournament={current}
             standings={liveStandings}
+            isPro={isPro}
+            {...(effectiveBranding ? { clubBranding: effectiveBranding } : {})}
             onBackHome={() => setScreen('home')}
+            onOpenProModal={(reason) => openProModal(reason)}
           />
         )}
 
@@ -647,6 +727,30 @@ function AppContent({
             setHasOrganizerPin(false);
             setOrganizerLocked(false);
             return true;
+          }}
+        />
+      )}
+      {proModalState && (
+        <ProLicenseModal
+          isPro={isPro}
+          license={licenseState.license}
+          clubBranding={clubBranding}
+          {...(proModalState.reason ? { reason: proModalState.reason } : {})}
+          onClose={() => setProModalState(null)}
+          onActivateLicense={async (rawKey) => {
+            const res = await licenseStore.activateLicense(rawKey);
+            if (res.valid) {
+              setLicenseState({ tier: 'pro', license: res.license });
+            }
+            return res;
+          }}
+          onDeactivateLicense={() => {
+            licenseStore.clearLicense();
+            setLicenseState({ tier: 'free', license: null });
+          }}
+          onSaveClubBranding={(branding) => {
+            const saved = brandingStore.save(branding);
+            setClubBranding(saved);
           }}
         />
       )}

@@ -25,6 +25,7 @@ import type {
   TournamentRecord
 } from '../../application/ports/tournament-repository.js';
 import type { SyncTimerOutcome } from '../../application/tournament-service.js';
+import type { ClubBranding } from '../../infrastructure/club-branding-store.js';
 import { downloadRulesPdf } from '../../infrastructure/pdf-exporter.js';
 import { setKeepAwake } from '../../infrastructure/power-manager.js';
 import { useI18n } from '../../i18n/context.js';
@@ -41,6 +42,8 @@ interface ActiveTournamentScreenProps {
   tournament: TournamentRecord;
   standings: StandingRow[];
   busy: boolean;
+  isPro?: boolean;
+  clubBranding?: ClubBranding;
   organizerLocked?: boolean;
   onRequireOrganizerAction?: (actionLabel: string, action: () => void) => void;
   onRequestLeave: () => void;
@@ -65,6 +68,8 @@ export function ActiveTournamentScreen({
   tournament,
   standings,
   busy,
+  isPro = false,
+  clubBranding,
   organizerLocked = false,
   onRequireOrganizerAction,
   onRequestLeave,
@@ -622,7 +627,10 @@ export function ActiveTournamentScreen({
                 <button
                   type="button"
                   onClick={() =>
-                    downloadRulesPdf(tournament.name, localizedRules, tournament.seed, locale)
+                    downloadRulesPdf(tournament.name, localizedRules, tournament.seed, locale, {
+                      isPro,
+                      ...(clubBranding ? { clubBranding } : {})
+                    })
                   }
                   className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-stone-50 px-2.5 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100"
                 >
@@ -714,6 +722,7 @@ export function ActiveTournamentScreen({
           nameOf={nameOf}
           tournament={tournament}
           standings={standings}
+          {...(clubBranding ? { clubBranding } : {})}
           onExit={() => setProjectionOpen(false)}
         />
       )}

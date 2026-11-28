@@ -13,7 +13,9 @@ export const es: Translations = {
     pinShort: 'PIN',
     pinLocked: 'Bloqueado',
     pinUnlocked: 'Organizador',
-    installApp: 'Instalar app'
+    installApp: 'Instalar app',
+    getPro: 'Hazte Pro ($10)',
+    proActive: 'Pro'
   },
   home: {
     badge: 'Offline-first · Parejas rotativas · Justo y explicable',
@@ -50,6 +52,14 @@ export const es: Translations = {
     sidebarTimeRuleTitle: 'Regla de cierre por tiempo',
     sidebarTimeRuleDesc:
       'Al agotarse los 25 minutos, se culmina únicamente la mano en curso y se anotan los puntos exactos. Si hay igualdad, queda registrada como empate (sin muerte súbita).',
+    sidebarProTitle: 'Edición Pro — $10 pago único',
+    sidebarProDesc:
+      'Organiza torneos de 17+ jugadores, personaliza la TV y PDFs con tu club y exporta tarjetas PNG para WhatsApp.',
+    sidebarProButton: 'Desbloquear Pro / Activar clave',
+    sidebarBrandingTitle: 'Marca del Club y Licencia Pro',
+    sidebarBrandingDesc:
+      'Tu licencia Pro está activa en este equipo. Personaliza el nombre y logo para TV y PDFs.',
+    sidebarBrandingButton: 'Gestionar Pro y Marca',
     status: {
       draft: 'Borrador',
       ready: 'Listo',
@@ -84,7 +94,12 @@ export const es: Translations = {
     emptyRoster: 'Aún no hay jugadores registrados en este torneo.',
     saveNameAria: 'Guardar nombre',
     editPlayerAria: (name: string) => `Editar ${name}`,
-    removePlayerAria: (name: string) => `Retirar ${name}`
+    removePlayerAria: (name: string) => `Retirar ${name}`,
+    freeLimitHint: (count: number, max: number) => `Plan gratuito: ${count} / ${max} jugadores`,
+    freeLimitReached: (max: number) =>
+      `Límite gratuito de ${max} jugadores alcanzado. Activa Pro para 17+ jugadores.`,
+    upgradeProShort: 'Activar Pro ($10)',
+    proTag: 'Pro'
   },
   preview: {
     editParticipants: 'Editar participantes',
@@ -196,6 +211,10 @@ export const es: Translations = {
     downloadReportPdf: 'Descargar reporte PDF',
     downloadRulesPdf: 'Descargar reglamento PDF',
     print: 'Imprimir',
+    shareCardPng: 'Tarjeta WhatsApp (PNG)',
+    shareCardReady: '¡Tarjeta PNG descargada lista para WhatsApp!',
+    shareCardShared: '¡Tarjeta PNG compartida!',
+    shareCardError: 'No se pudo generar la imagen en este navegador.',
     finishedBanner: (name: string) => `Torneo finalizado · ${name}`,
     individualChampion: 'Campeón Individual',
     championRecord: (num: number, w: number, d: number, l: number, diff: string) =>
@@ -448,5 +467,68 @@ export const es: Translations = {
     currentPinPlaceholder: 'PIN actual',
     close: 'Cerrar',
     removePin: 'Quitar PIN'
+  },
+  proModal: {
+    upgradeTitle: 'Domino Tournament Manager Pro',
+    activeTitle: 'Licencia Pro y Marca del Club',
+    subtitleFree:
+      'Organiza torneos 100% justos gratis hasta 16 jugadores, o desbloquea herramientas para clubes de por vida por $10.',
+    subtitlePro: 'Tu licencia Pro offline firmada con Ed25519 está verificada y activa en este equipo.',
+    closeAria: 'Cerrar ventana Pro',
+    gateReasons: {
+      player_limit: (max: number) =>
+        `Tu lista superaría el límite gratuito de ${max} jugadores. Activa Pro para organizar torneos de 17+ jugadores.`,
+      branding: 'La personalización con nombre y logo de tu club en TV y PDFs es una función Pro.',
+      share_card: 'La descarga de la tarjeta PNG del campeón para WhatsApp está incluida en Pro.'
+    },
+    freeHeading: 'Gratis para siempre',
+    freeBadge: '$0',
+    freeFeatures: [
+      'Hasta 16 jugadores · 100% offline',
+      'Ambas modalidades justas (Por rondas y Eliminaciones)',
+      'Cronómetro, llave visual y tabla en vivo',
+      'Respaldo JSON, PIN de organizador y reglamento'
+    ],
+    proHeading: 'Pro de por vida',
+    proBadge: '$10 pago único',
+    proFeatures: [
+      'Jugadores ilimitados (17+ hasta 40+ mesas)',
+      'Nombre y logo de tu club/partida en TV y PDFs',
+      'PDFs limpios sin pie de edición gratuita',
+      'Tarjeta resumen PNG para compartir en WhatsApp'
+    ],
+    paymentMethodsLabel: 'Métodos de pago aceptados en lanzamiento:',
+    requestKeyTitle: 'Cómo obtener tu clave de por vida ($10 lanzamiento)',
+    requestKeyDesc:
+      'Sin suscripciones ni cuentas. Envía el nombre de tu club u organizador por correo o GitHub/WhatsApp para recibir tu clave firmada offline (DTM-PRO-1...).',
+    contactCta: 'Solicitar clave Pro por correo',
+    activateSectionTitle: '¿Ya tienes una clave de licencia?',
+    keyInputLabel: 'Pega tu clave Pro firmada',
+    keyPlaceholder: 'DTM-PRO-1....',
+    activateButton: 'Activar Pro',
+    activatingButton: 'Verificando...',
+    activationSuccess: (holder: string) => `¡Pro activado! Licencia a nombre de ${holder}.`,
+    errors: {
+      empty: 'Pega primero tu clave de licencia Pro.',
+      malformed: 'Formato inválido. La clave debe comenzar con DTM-PRO-1.',
+      unsupported_version: 'Esta versión de licencia no es compatible con esta compilación.',
+      invalid_signature: 'Firma de licencia inválida. Verifica que copiaste la clave completa.',
+      crypto_unavailable: 'La verificación Ed25519 no está disponible en este navegador.'
+    },
+    activeBannerTitle: 'Licencia Pro Activa',
+    licensedTo: 'A nombre de:',
+    licenseIdLabel: 'ID de licencia:',
+    issuedAtLabel: 'Emitida:',
+    deactivateButton: 'Quitar licencia',
+    brandingSectionTitle: 'Marca del Club / Evento (TV y PDFs)',
+    brandingDesc:
+      'Se guarda solo localmente en este equipo. Aparece en Modo Proyección, PDFs limpios y tarjeta de WhatsApp.',
+    clubNameLabel: 'Nombre del club o evento',
+    clubNamePlaceholder: 'Ej. Club Dominó El Cafetal',
+    logoLabel: 'Logo del club (PNG, JPEG, WebP, SVG · máx 250 KB)',
+    chooseLogoButton: 'Subir logo',
+    removeLogoButton: 'Quitar logo',
+    saveBrandingButton: 'Guardar marca',
+    brandingSavedMessage: 'Marca del club guardada en este equipo.'
   }
 };

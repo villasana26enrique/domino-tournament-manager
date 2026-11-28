@@ -17,7 +17,9 @@
     "simulate:verify-determinism": "tsx src/cli/simulate.ts verify-determinism",
     "audit": "npm run typecheck && npm test && npm run simulate:matrix -- --seeds 1,2,3",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "license:keygen": "node scripts/generate-license-keys.mjs",
+    "license:issue": "node scripts/issue-license.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.3.0",

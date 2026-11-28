@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BookOpen,
   CalendarDays,
+  Crown,
   HardDrive,
   Plus,
   Trash2,
@@ -15,11 +16,13 @@ import { useI18n } from '../../i18n/context.js';
 interface HomeScreenProps {
   tournaments: TournamentRecord[];
   busy: boolean;
+  isPro: boolean;
   onCreateTournament: (name: string) => Promise<void>;
   onOpenTournament: (tournament: TournamentRecord) => void;
   onRequestDeleteTournament: (tournament: TournamentRecord) => void;
   onOpenBackup: () => void;
   onOpenModalities: () => void;
+  onOpenProModal: (reason?: 'branding') => void;
 }
 
 const STATUS_BADGE_CLASS: Record<TournamentRecord['status'], string> = {
@@ -33,11 +36,13 @@ const STATUS_BADGE_CLASS: Record<TournamentRecord['status'], string> = {
 export function HomeScreen({
   tournaments,
   busy,
+  isPro,
   onCreateTournament,
   onOpenTournament,
   onRequestDeleteTournament,
   onOpenBackup,
-  onOpenModalities
+  onOpenModalities,
+  onOpenProModal
 }: HomeScreenProps) {
   const { t } = useI18n();
   const [name, setName] = useState('');
@@ -262,6 +267,36 @@ export function HomeScreen({
           <div className="rounded-2xl border border-stone-200 bg-stone-100/70 p-5 text-xs text-stone-600">
             <p className="font-semibold text-stone-800">{t.home.sidebarTimeRuleTitle}</p>
             <p className="mt-1 leading-relaxed">{t.home.sidebarTimeRuleDesc}</p>
+          </div>
+
+          <div
+            className={`rounded-2xl border p-5 shadow-xs ${
+              isPro
+                ? 'border-emerald-200 bg-emerald-50/70'
+                : 'border-amber-200 bg-amber-50/60'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Crown className={`h-5 w-5 ${isPro ? 'text-emerald-700' : 'text-amber-600'}`} />
+              <h2 className="text-sm font-semibold text-stone-900">
+                {isPro ? t.home.sidebarBrandingTitle : t.home.sidebarProTitle}
+              </h2>
+            </div>
+            <p className="mt-1.5 text-xs leading-relaxed text-stone-600">
+              {isPro ? t.home.sidebarBrandingDesc : t.home.sidebarProDesc}
+            </p>
+            <button
+              type="button"
+              onClick={() => onOpenProModal()}
+              className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                isPro
+                  ? 'border border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100/60'
+                  : 'bg-amber-400 text-stone-950 hover:bg-amber-300'
+              }`}
+            >
+              <Crown className="h-3.5 w-3.5" />
+              {isPro ? t.home.sidebarBrandingButton : t.home.sidebarProButton}
+            </button>
           </div>
         </aside>
       </div>

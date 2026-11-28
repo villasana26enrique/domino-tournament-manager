@@ -8,6 +8,69 @@ import type {
 } from '../core/index.js';
 import type { TournamentRecord } from '../application/ports/tournament-repository.js';
 import { localizeStageName } from '../i18n/domain-labels.js';
+import type { ClubBranding } from './club-branding-store.js';
+
+export interface PdfExportOptions {
+  isPro?: boolean;
+  clubBranding?: ClubBranding;
+}
+
+function resolveLogoFormat(dataUrl: string): 'PNG' | 'JPEG' | 'WEBP' | null {
+  if (dataUrl.startsWith('data:image/png;')) return 'PNG';
+  if (dataUrl.startsWith('data:image/jpeg;') || dataUrl.startsWith('data:image/jpg;')) {
+    return 'JPEG';
+  }
+  if (dataUrl.startsWith('data:image/webp;')) return 'WEBP';
+  return null;
+}
+
+function applyBrandingHeaderExtras(
+  doc: jsPDF,
+  pageWidth: number,
+  margin: number,
+  options?: PdfExportOptions
+): void {
+  if (!options?.isPro) return;
+  const branding = options.clubBranding;
+  if (!branding) return;
+
+  if (branding.clubName) {
+    doc.setTextColor(217, 249, 229);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text(sanitizePdfText(branding.clubName), pageWidth - margin, 26, { align: 'right' });
+  }
+
+  if (branding.logoDataUrl) {
+    const format = resolveLogoFormat(branding.logoDataUrl);
+    if (format) {
+      try {
+        doc.addImage(branding.logoDataUrl, format, pageWidth - margin - 34, 34, 34, 34);
+      } catch {
+        // Skip invalid image bytes silently so PDF export always succeeds
+      }
+    }
+  }
+}
+
+function applyFreeEditionFooter(doc: jsPDF, locale: CoreLocale, options?: PdfExportOptions): void {
+  if (options?.isPro) return;
+  const pageCount = doc.getNumberOfPages();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const label =
+    locale === 'en'
+      ? 'Domino Tournament Manager - Free Edition'
+      : 'Domino Tournament Manager - Free Edition (Edicion gratuita)';
+
+  for (let i = 1; i <= pageCount; i += 1) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(120, 113, 108);
+    doc.text(label, pageWidth / 2, pageHeight - 20, { align: 'center' });
+  }
+}
 
 function sanitizePdfText(text: string): string {
   return text
@@ -51,7 +114,8 @@ export function generateRulesPdfBytes(
   tournamentName: string,
   rules: StructuredRulesDocument,
   seed: string,
-  locale: CoreLocale = 'es'
+  locale: CoreLocale = 'es',
+  options?: PdfExportOptions
 ): Uint8Array {
   const isEn = locale === 'en';
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -70,6 +134,7 @@ export function generateRulesPdfBytes(
 
   doc.setFillColor(6, 78, 59);
   doc.rect(0, 0, pageWidth, 88, 'F');
+  applyBrandingHeaderExtras(doc, pageWidth, margin, options);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(17);
@@ -127,6 +192,7 @@ export function generateRulesPdfBytes(
     y += 8;
   }
 
+  applyFreeEditionFooter(doc, locale, options);
   return new Uint8Array(doc.output('arraybuffer'));
 }
 
@@ -134,7 +200,8 @@ export function generateFinalReportPdfBytes(
   tournament: TournamentRecord,
   standings: readonly StandingRow[],
   stats: TournamentStatistics,
-  locale: CoreLocale = 'es'
+  locale: CoreLocale = 'es',
+  options?: PdfExportOptions
 ): Uint8Array {
   const isEn = locale === 'en';
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -144,6 +211,7 @@ export function generateFinalReportPdfBytes(
 
   doc.setFillColor(6, 78, 59);
   doc.rect(0, 0, pageWidth, 86, 'F');
+  applyBrandingHeaderExtras(doc, pageWidth, margin, options);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(17);
@@ -357,6 +425,7 @@ export function generateFinalReportPdfBytes(
     }
   }
 
+  applyFreeEditionFooter(doc, locale, options);
   return new Uint8Array(doc.output('arraybuffer'));
 }
 
@@ -364,9 +433,10 @@ export function downloadRulesPdf(
   tournamentName: string,
   rules: StructuredRulesDocument,
   seed: string,
-  locale: CoreLocale = 'es'
+  locale: CoreLocale = 'es',
+  options?: PdfExportOptions
 ): void {
-  const bytes = generateRulesPdfBytes(tournamentName, rules, seed, locale);
+  const bytes = generateRulesPdfBytes(tournamentName, rules, seed, locale, options);
   const prefix = locale === 'en' ? 'domino-rules' : 'reglamento';
   triggerBrowserDownload(bytes, `${prefix}-${slugifyFilename(tournamentName)}.pdf`);
 }
@@ -375,9 +445,10 @@ export function downloadFinalReportPdf(
   tournament: TournamentRecord,
   standings: readonly StandingRow[],
   stats: TournamentStatistics,
-  locale: CoreLocale = 'es'
+  locale: CoreLocale = 'es',
+  options?: PdfExportOptions
 ): void {
-  const bytes = generateFinalReportPdfBytes(tournament, standings, stats, locale);
+  const bytes = generateFinalReportPdfBytes(tournament, standings, stats, locale, options);
   const prefix = locale === 'en' ? 'domino-report' : 'reporte';
   triggerBrowserDownload(bytes, `${prefix}-${slugifyFilename(tournament.name)}.pdf`);
 }

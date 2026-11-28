@@ -130,3 +130,14 @@ Este documento registra las decisiones arquitectónicas (ADR), matemáticas y de
   3. **Botón de instalación (`usePwaInstall`):** Escucha `beforeinstallprompt` y muestra `Install app` / `Instalar app` en la cabecera solo cuando el navegador permite instalarla.
   4. **SEO y vista previa social (`index.html`, `og-card.png`, `robots.txt`, `sitemap.xml`):** Metadatos Open Graph (`1200x630`), Twitter Card y esquema JSON-LD `SoftwareApplication` en inglés como idioma canónico.
   5. **Limpieza:** Retirada la dependencia no utilizada `zustand`.
+
+## ADR-016 — Licenciamiento Pro Offline con Ed25519, Branding del Club y Tarjeta PNG para WhatsApp
+
+- **Estado:** Aprobado (Pre-comercialización — PR #5)
+- **Contexto:** Monetizar como microproducto con pago único (\$10 lanzamiento) manteniendo **\$0/mes** en infraestructura, funcionamiento **100% offline** y **cero recortes a la justicia del torneo gratuito**.
+- **Decisión:**
+  1. **Firmas asimétricas Ed25519 offline (`src/infrastructure/license-store.ts`, `scripts/generate-license-keys.mjs`, `scripts/issue-license.mjs`):** Las claves tienen formato `DTM-PRO-1.<payloadB64>.<sigB64>` verificadas localmente en el navegador vía Web Crypto `Ed25519` usando únicamente la clave pública embebida (`license-public-key.ts`). La clave privada vive exclusivamente en `.keys/ed25519-private.pem` (en `.gitignore`) y permite a Enrique emitir claves de por vida desde su Mac (`npm run license:issue -- --name "..."`) para él, vecinos o compradores sin base de datos ni servidor.
+  2. **Modelo Free vs Pro justo (`src/infrastructure/commercial-config.ts`):**
+     - **Free (\$0):** ambas modalidades (`rounds_all_play` y `qualifying_elimination`), hasta **16 jugadores**, cronómetro, llave visual, tabla de posiciones, respaldo JSON, PIN de organizador y PDFs con pie sutil `Free Edition`.
+     - **Pro (\$10 pago único):** **17+ jugadores**, **Branding local del club** (nombre + logo en `ProjectionView` y PDFs sin pie gratuito) y **Tarjeta PNG resumen del campeón** para compartir por WhatsApp (`share-card-exporter.ts`).
+  3. **Documentación operativa:** Guía paso a paso en `LICENSING.md` para emitir claves, instalarlas offline en cualquier equipo y respaldar la clave privada.
