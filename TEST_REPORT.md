@@ -130,6 +130,11 @@ Este archivo conserva evidencia real y reproducible de cada comando de verificac
 
 ---
 
-## Pendiente en Fase 6
+## Verificación Fase 6 — Íconos Tauri, CI Windows NSIS, Manual y SEO (`feat/phase-6-ci-windows-manual-seo`, `2026-11-27`)
 
-- Build del instalador NSIS `.exe` en Windows (CI / máquina Windows), prueba real en PC Windows limpia *(no se declarará funcional hasta probarse en Windows)* y manual rápido de 1 página para organizadores.
+- `npm run typecheck`: **APROBADO** (0 errores bajo `strict: true`).
+- `npm test`: **23/23 archivos, 111/111 pruebas aprobadas** en `4.22s` (incluyendo `tests/infrastructure/release-readiness.test.ts` 3/3).
+- `npm run build`: **APROBADO** (`vite build` en `1.64s` + `PWA v2.0.0`, 20 entradas precacheadas, `1710.12 KiB`).
+- `npm run test:e2e`: **12/12 pruebas Playwright activas aprobadas** en `7.0s` (desktop `1280x800` + móvil `390x844` / `375x667`, 4 pruebas del paywall omitidas por `PRO_MONETIZATION_ENABLED = false` mientras Vitest sigue probando ambos modos).
+- `npm run simulate:matrix -- --seeds 1,2`: **42/42 torneos** con **0 violaciones de restricciones**.
+- **Nota sobre Windows / Rust (`src-tauri/`):** Esta Mac no tiene `rustc` instalado en local; al incorporar `src-tauri/icons/` (`icon.ico`, `icon.icns`, PNGs) y `.github/workflows/build-windows.yml`, el job `rust-sqlite-tests` en `windows-latest` pasa a contar con el recurso Windows requerido y queda listo el pipeline para compilar el instalador `.exe` NSIS (a probar en una PC Windows limpia al publicar el primer tag `v*` o disparo manual).
